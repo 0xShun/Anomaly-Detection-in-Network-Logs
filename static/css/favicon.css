@@ -1,0 +1,11 @@
+/* Favicon styles and fallbacks */
+.favicon {
+    color: #8B0000;
+}
+
+/* Fallback favicon using CSS */
+.favicon-fallback::before {
+    content: '🛡️';
+    font-size: 16px;
+    color: #8B0000;
+} 

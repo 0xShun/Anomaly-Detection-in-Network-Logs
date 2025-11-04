@@ -1,0 +1,435 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics Dashboard - Log Anomaly Detection Platform{% endblock %}
+
+{% block page_title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<!-- Analytics Overview -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="content-card">
+            <div class="card-header border-0 pb-3">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar card-icon"></i>
+                    Analytics Overview
+                </h5>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6">
+                    <div class="analytics-metric">
+                        <div class="metric-icon bg-primary-subtle">
+                            <i class="fas fa-chart-line text-primary"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3 class="text-primary mb-1">{{ total_logs|default:"0" }}</h3>
+                            <p class="text-muted mb-0">Total Logs</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="analytics-metric">
+                        <div class="metric-icon bg-danger-subtle">
+                            <i class="fas fa-exclamation-triangle text-danger"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3 class="text-danger mb-1">{{ total_anomalies|default:"0" }}</h3>
+                            <p class="text-muted mb-0">Total Anomalies</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="analytics-metric">
+                        <div class="metric-icon bg-success-subtle">
+                            <i class="fas fa-percentage text-success"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3 class="text-success mb-1">{{ anomaly_rate|default:"0" }}%</h3>
+                            <p class="text-muted mb-0">Anomaly Rate</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="analytics-metric">
+                        <div class="metric-icon bg-info-subtle">
+                            <i class="fas fa-clock text-info"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3 class="text-info mb-1">{{ avg_response_time|default:"0" }}ms</h3>
+                            <p class="text-muted mb-0">Avg Response Time</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Section -->
+<div class="row mb-5">
+    <div class="col-lg-8 mb-4">
+        <div class="content-card">
+            <div class="card-header border-0 pb-3">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-area card-icon"></i>
+                    Log Volume Over Time
+                </h5>
+            </div>
+            <div class="chart-container" style="height: 400px;">
+                <div class="d-flex align-items-center justify-content-center h-100">
+                    <div class="text-center">
+                        <i class="fas fa-chart-area fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Interactive Chart</h5>
+                        <p class="text-muted">This chart will display log volume trends over time</p>
+                        <button class="btn btn-primary-custom" onclick="loadChart()">
+                            <i class="fas fa-sync-alt me-2"></i>
+                            Load Chart Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="content-card">
+            <div class="card-header border-0 pb-3">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie card-icon"></i>
+                    Log Type Distribution
+                </h5>
+            </div>
+            <div class="chart-container" style="height: 400px;">
+                <div class="d-flex align-items-center justify-content-center h-100">
+                    <div class="text-center">
+                        <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Pie Chart</h5>
+                        <p class="text-muted">Distribution of log types</p>
+                        <button class="btn btn-secondary-custom" onclick="loadPieChart()">
+                            <i class="fas fa-sync-alt me-2"></i>
+                            Load Chart Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Anomaly Analysis -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="content-card">
+            <div class="card-header border-0 pb-3">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-search card-icon"></i>
+                    Anomaly Analysis
+                </h5>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="anomaly-stats">
+                        <h6 class="mb-3">Anomaly Score Distribution</h6>
+                        <div class="score-bars">
+                            <div class="score-bar">
+                                <div class="score-label">0.5 - 0.6</div>
+                                <div class="score-progress">
+                                    <div class="progress-bar bg-success" style="width: 15%"></div>
+                                </div>
+                                <div class="score-count">15</div>
+                            </div>
+                            <div class="score-bar">
+                                <div class="score-label">0.6 - 0.7</div>
+                                <div class="score-progress">
+                                    <div class="progress-bar bg-warning" style="width: 25%"></div>
+                                </div>
+                                <div class="score-count">25</div>
+                            </div>
+                            <div class="score-bar">
+                                <div class="score-label">0.7 - 0.8</div>
+                                <div class="score-progress">
+                                    <div class="progress-bar bg-danger" style="width: 35%"></div>
+                                </div>
+                                <div class="score-count">35</div>
+                            </div>
+                            <div class="score-bar">
+                                <div class="score-label">0.8 - 0.9</div>
+                                <div class="score-progress">
+                                    <div class="progress-bar bg-danger" style="width: 20%"></div>
+                                </div>
+                                <div class="score-count">20</div>
+                            </div>
+                            <div class="score-bar">
+                                <div class="score-label">0.9 - 1.0</div>
+                                <div class="score-progress">
+                                    <div class="progress-bar bg-danger" style="width: 5%"></div>
+                                </div>
+                                <div class="score-count">5</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="anomaly-trends">
+                        <h6 class="mb-3">Top Anomaly Sources</h6>
+                        <div class="trend-list">
+                            <div class="trend-item">
+                                <div class="trend-icon bg-danger-subtle">
+                                    <i class="fas fa-server text-danger"></i>
+                                </div>
+                                <div class="trend-info">
+                                    <h6>web_server</h6>
+                                    <p class="text-muted mb-1">45 anomalies detected</p>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-danger" style="width: 75%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="trend-item">
+                                <div class="trend-icon bg-warning-subtle">
+                                    <i class="fas fa-database text-warning"></i>
+                                </div>
+                                <div class="trend-info">
+                                    <h6>database</h6>
+                                    <p class="text-muted mb-1">32 anomalies detected</p>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-warning" style="width: 55%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="trend-item">
+                                <div class="trend-icon bg-info-subtle">
+                                    <i class="fas fa-shield-alt text-info"></i>
+                                </div>
+                                <div class="trend-info">
+                                    <h6>firewall</h6>
+                                    <p class="text-muted mb-1">18 anomalies detected</p>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-info" style="width: 30%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Streamlit Integration -->
+<div class="row">
+    <div class="col-12">
+        <div class="content-card">
+            <div class="card-header border-0 pb-3">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-stream card-icon"></i>
+                    Interactive Analytics (Streamlit)
+                </h5>
+            </div>
+            <div class="streamlit-container">
+                <div class="d-flex align-items-center justify-content-center" style="height: 300px;">
+                    <div class="text-center">
+                        <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                        <h5>Interactive Analytics Dashboard</h5>
+                        <p class="text-muted mb-3">Access advanced analytics and visualizations through our Streamlit integration</p>
+                        <a href="http://localhost:8501" target="_blank" class="btn btn-primary-custom">
+                            <i class="fas fa-external-link-alt me-2"></i>
+                            Open Streamlit Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function loadChart() {
+    // This would load chart data via AJAX
+    console.log('Loading chart data...');
+    // In a real implementation, you would fetch data from the API
+    // and render it using Chart.js or similar
+}
+
+function loadPieChart() {
+    // This would load pie chart data via AJAX
+    console.log('Loading pie chart data...');
+    // In a real implementation, you would fetch data from the API
+    // and render it using Chart.js or similar
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Analytics Dashboard Specific Styles */
+.analytics-metric {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.analytics-metric:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.metric-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.metric-info h3 {
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.chart-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.anomaly-stats {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+}
+
+.score-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.score-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.score-label {
+    width: 80px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.score-progress {
+    flex: 1;
+    height: 8px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.score-count {
+    width: 40px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.anomaly-trends {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+}
+
+.trend-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.trend-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.trend-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.trend-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.trend-info {
+    flex: 1;
+}
+
+.trend-info h6 {
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.streamlit-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .analytics-metric {
+        padding: 1rem;
+    }
+    
+    .metric-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .score-label {
+        width: 60px;
+        font-size: 0.75rem;
+    }
+    
+    .trend-item {
+        padding: 0.75rem;
+    }
+    
+    .trend-icon {
+        width: 35px;
+        height: 35px;
+    }
+}
+</style>
+{% endblock %} 

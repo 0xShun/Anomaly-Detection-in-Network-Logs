@@ -1,0 +1,204 @@
+Project Implementation Checklist
+===============================
+
+Purpose
+-------
+This checklist covers Alerts & Escalation, Incident Management, Kafka/Consumer operations, System Health & Metrics (Streamlit-only per request), and Manual Labeling & Feedback Loop.
+
+Format
+------
+Each feature is broken into: goals, deliverables (files/models/tasks/UI), subtasks, acceptance criteria, and tests.
+
+1) Alerts & Escalation
+----------------------
+Goals:
+- Detect anomalous conditions and notify operators via configurable channels.
+- Provide escalation if alerts are not acknowledged.
+
+Deliverables:
+- Django models: AlertRule, AlertNotification, EscalationPolicy (optional)
+- Celery tasks: evaluate_alert_rules (scheduled), send_alert_notification
+- WebSocket: Channels consumer/group "alerts" for live updates
+- Admin UI: CRUD for AlertRule + test send action
+- Small Streamlit or Django page to view historical alert notifications (Streamlit not required if main dashboard already exists)
+
+Subtasks:
+- [ ] Create models and migrations
+- [ ] Register models in admin with filters/actions
+- [ ] Implement Celery tasks and add to Celery Beat schedule
+- [ ] Implement senders: email, webhook, slack; add SMS adapter placeholder
+- [ ] Store AlertNotification with sent_channels, retries, and acknowledgement fields
+- [ ] Implement acknowledgement endpoint (API + admin action)
+- [ ] Implement escalation: schedule a follow-up task that checks unacknowledged notifs and escalates
+- [ ] Implement Channels consumer that broadcasts alert messages to group 'alerts'
+- [ ] Add unit tests for rule evaluation and send task (happy path + failure + retry)
+
+Acceptance criteria:
+- Rule evaluation task fires and creates AlertNotification when conditions met
+- send_alert_notification persists sent_channels and doesn't crash on remote failures
+- Alert messages reach connected WebSocket clients
+
+Files to create/modify:
+- alerts/models.py (AlertRule, AlertNotification)
+- alerts/tasks.py (Celery tasks)
+- alerts/consumers.py (Channels consumer)
+- alerts/admin.py
+- alerts/serializers.py + alerts/views.py (acknowledge API)
+- tests/alerts_test.py
+
+2) Incident Management & Triage UI
+----------------------------------
+Goals:
+- Allow analysts to create, assign, annotate, and resolve incidents derived from anomalies.
+- Link logs to incidents and keep an audit trail.
+
+Deliverables:
+- Django models: Incident, IncidentLog (or IncidentAttachment)
+- Admin and REST API for CRUD + assignment actions
+- Frontend component (small React/Angular or use Django admin/custom templates) for triage
+- Integration point where an AlertNotification can create an Incident automatically
+
+Subtasks:
+- [ ] Create Incident & IncidentLog models and migrations
+- [ ] Admin + DRF endpoints for creating/assigning/updating state
+- [ ] Add actions: create incident from alert, attach logs by id/offset
+- [ ] Add incident detail page showing linked log context (open in new tab or iframe streaming logs)
+- [ ] Add unit tests for incident state transitions and permissions
+
+Acceptance criteria:
+- User can create/assign/annotate incident from UI or API
+- Incident stores linked log identifiers and shows history
+
+Files to create/modify:
+- incidents/models.py
+- incidents/admin.py
+- incidents/views.py / serializers.py
+- frontend: incidents component OR django templates under templates/incidents/
+- tests/incidents_test.py
+
+3) Consumer & Kafka Operations Panel
+------------------------------------
+Goals:
+- Expose consumer group status, lag, offsets, throughput; allow controlled start/stop where safe.
+
+Deliverables:
+- Small operations API that uses KafkaAdminClient/KafkaConsumer to list topics, describe consumer groups, get offsets and lag
+- Admin UI panel to show results (read-only by default)
+- (Optional) Actions to trigger remote service restart via supervisor/docker (implemented as Celery remote task that calls a controlled orchestrator)
+
+Subtasks:
+- [ ] Implement util wrappers for KafkaAdminClient calls (list_topics, describe_topics)
+- [ ] Implement consumer metrics: commit offsets, current position, end offsets to compute lag
+- [ ] Implement read-only API endpoints for these metrics
+- [ ] Add admin-only page or Streamlit page for operations view
+- [ ] Add safe start/stop API that calls an admin-run supervised command (documented) or triggers a worker via Celery (no direct SSH commands in codebase)
+
+Acceptance criteria:
+- Metrics endpoints return consumer group offsets and computed lag
+- Start/stop endpoints require admin permission and only return a job id (no direct process control unless orchestrated)
+
+Files to create/modify:
+- monitoring/kafka_utils.py (helpers)
+- monitoring/views.py (ops endpoints)
+- monitoring/streamlit_system_monitor.py (if using Streamlit for extended visuals)
+
+4) System Health & Metrics Dashboard (Streamlit only)
+-----------------------------------------------------
+Goals:
+- Keep Django main dashboard as-is; use Streamlit for additional system monitoring and long-running visuals.
+
+Deliverables:
+- Streamlit pages for: telemetry (ingestion rate), system status history, node resource charts, Kafka consumer lag over time
+- DB model (SystemStatus) or push to Prometheus (preferred for long-term monitoring)
+
+Subtasks:
+- [ ] Persist periodic checks (get_system_status) into SystemStatus DB model or push metrics to Prometheus
+- [ ] Create Streamlit app page(s) to visualize the data and provide CSV export
+- [ ] Add Streamlit auth (basic token) or keep behind internal network
+- [ ] Add unit/integration test that get_system_status returns expected dict structure
+
+Acceptance criteria:
+- Streamlit page displays live status and historical trends (using DB or Prometheus as source)
+- System checks scheduled (Celery Beat or OS cron) and data ingested
+
+Files to create/modify:
+- streamlit/system_monitoring.py (new streamlit page)
+- dashboard/models.py (SystemStatus persistence) or instructions for Prometheus push
+
+5) Manual Labeling & Feedback Loop
+----------------------------------
+Goals:
+- Allow analysts to mark anomalies as true/false positives and export labeled data for retraining.
+- Provide bulk labeling and label export APIs.
+
+Deliverables:
+- Django models: Label (anomaly_id, label, comment, labeled_by)
+- API endpoints: bulk_label, export_labels_csv (authenticated + role-checked)
+- Frontend UI for bulk labeling (Django template or React component)
+- Background job to package labels and features for retraining (S3 upload or local artifact)
+
+Subtasks:
+- [ ] Create Label model and migrations
+- [ ] Create bulk_label API and export endpoint
+- [ ] Add front-end bulk labeling UI and selection flows in anomalies table
+- [ ] Create background task that compiles labeled features (optionally run via Celery) for model training
+- [ ] Document dataset schema and export format
+
+Acceptance criteria:
+- Analysts can label anomalies via UI/API
+- Label export produces a CSV with required columns (anomaly_id, features..., label, provenance)
+
+Files to create/modify:
+- labels/models.py
+- labels/views.py / serializers.py
+- labels/admin.py
+- training/export_job.py (Celery task)
+
+Cross-cutting concerns
+----------------------
+- Authentication & Authorization: ensure endpoints/actions are protected and roles (Analyst, Operator, Admin) are enforced.
+- Auditing: record who changed rules, acknowledged alerts, labeled anomalies, or changed incident state.
+- Testing: unit tests for models + tasks, integration tests for Celery tasks (mock kafka/db), and API tests for endpoints.
+- Deployment: update Procfile/docs for Celery worker, Celery Beat, Channels worker, and Streamlit host instructions.
+
+Schedule + Milestones (suggested)
+---------------------------------
+- Week 1: Models and admin (AlertRule, AlertNotification, Incident, Label) + migrations + unit tests
+- Week 2: Celery tasks (rule evaluation, notification sending, escalation), Channels consumer for live alerts
+- Week 3: Incident UI, incident APIs, linking logs, and bulk labeling UI + export
+- Week 4: Kafka ops endpoints, Streamlit system pages, end-to-end tests, docs and deployment notes
+
+Quick verification commands (PowerShell)
+----------------------------------------
+Run migrations and start servers for local testing:
+```powershell
+venv\Scripts\Activate.ps1
+python manage.py makemigrations
+python manage.py migrate
+# Start Django dev server
+python manage.py runserver
+# Start Celery worker (from project root)
+celery -A webplatform worker -l info
+# Start Celery Beat
+celery -A webplatform beat -l info
+# Start Channels Daphne server (if using channels)
+# daphne -b 0.0.0.0 -p 8001 webplatform.asgi:application
+# Run Streamlit monitoring UI
+streamlit run streamlit/system_monitoring.py
+```
+
+Notes & assumptions
+-------------------
+- The repository already uses Django, Channels, Celery and Kafka clients; ensure these are installed and configured (settings.KAFKA_BROKER_URL, Celery broker/backends, CHANNEL_LAYERS).
+- Consumer start/stop: code should not execute privileged OS-level commands; prefer orchestrating service control via an operator (supervisor/systemd) or via a controlled remote operator service called by an authenticated Celery task.
+- For production alert delivery use retry and backoff and record failures in AlertNotification for audit.
+
+Next steps (first three actions)
+-------------------------------
+- [ ] Add models for AlertRule, AlertNotification, Incident, Label and create migrations
+- [ ] Implement Celery evaluate_alert_rules and schedule it in Celery Beat
+- [ ] Implement Channels consumer and lightweight frontend to receive live alerts
+
+Created file: `checklist.txt` at project root.
+
+If you'd like, I can scaffold the models and one Celery task next. Pick which feature to start with and I will implement it in the repo.

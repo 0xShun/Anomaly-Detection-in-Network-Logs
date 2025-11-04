@@ -1,0 +1,48 @@
+# Minimal requirements for PythonAnywhere deployment
+# This excludes heavy packages like PyTorch, Transformers, FastAPI, etc.
+# Those run on the local network, not on the remote monitoring platform
+
+# Core Django
+Django==5.2.5
+sqlparse==0.5.3
+asgiref==3.9.1
+tzdata==2025.2
+
+# Django REST Framework for API
+djangorestframework==3.14.0
+
+# CORS support for local network API calls
+django-cors-headers==4.3.1
+
+# Forms and UI
+django-crispy-forms==2.4
+crispy-bootstrap5==2025.6
+
+# System monitoring
+psutil==7.0.0
+
+# Data handling (lightweight)
+numpy==2.3.2
+pandas==2.3.1
+python-dateutil==2.9.0.post0
+
+# Visualization (for dashboard charts)
+matplotlib==3.10.5
+seaborn==0.13.2
+plotly==5.24.1
+
+# API client for testing
+requests==2.32.4
+
+# Testing
+pytest==8.3.4
+
+# Utilities
+PyYAML==6.0.2
+
+# Note: The following are NOT included (run on local network):
+# - torch (800MB+) - model inference runs locally
+# - transformers - not needed on remote platform
+# - kafka-python - not used in API architecture
+# - channels/redis - not needed for REST API
+# - fastapi/uvicorn - using Django REST Framework

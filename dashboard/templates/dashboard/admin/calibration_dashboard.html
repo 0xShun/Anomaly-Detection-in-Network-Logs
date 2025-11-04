@@ -1,0 +1,382 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Model Calibration - LogBERT Admin{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+    .calibration-card { margin-bottom: 20px; }
+    .threshold-display { 
+        font-size: 1.2em; 
+        font-weight: bold; 
+        color: #007bff; 
+    }
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+    .metric-card {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .calibration-form {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .chart-container {
+        height: 400px;
+        margin: 20px 0;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">
+                <i class="fas fa-cogs"></i> Model Calibration Dashboard
+            </h1>
+        </div>
+    </div>
+
+    <!-- Current Thresholds Overview -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card calibration-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Current Thresholds</h5>
+                </div>
+                <div class="card-body">
+                    {% if current_thresholds %}
+                        <div class="metrics-grid">
+                            {% for domain, versions in current_thresholds.items %}
+                                {% for version, config in versions.items %}
+                                    <div class="metric-card">
+                                        <h6>{{ domain|title }} - {{ version }}</h6>
+                                        <div class="threshold-display">{{ config.threshold|floatformat:4 }}</div>
+                                    </div>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No thresholds configured yet.</p>
+                    {% endif %}
+                    
+                    <form method="post" action="{% url 'dashboard:reload_thresholds' %}" class="mt-3">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-secondary">
+                            <i class="fas fa-sync"></i> Reload Thresholds
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calibration Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card calibration-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Run New Calibration</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'dashboard:run_calibration' %}" class="calibration-form">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="domain">Domain:</label>
+                                    <select name="domain" id="domain" class="form-control" required>
+                                        {% for domain in available_domains %}
+                                            <option value="{{ domain }}">{{ domain|title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="model_version">Model Version:</label>
+                                    <input type="text" name="model_version" id="model_version" 
+                                           class="form-control" value="current" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="objective">Optimization Objective:</label>
+                                    <select name="objective" id="objective" class="form-control">
+                                        {% for value, label in available_objectives %}
+                                            <option value="{{ value }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="target_fp">Target False Positive Rate:</label>
+                                    <input type="number" name="target_fp" id="target_fp" 
+                                           class="form-control" value="0.01" step="0.001" min="0" max="1">
+                                    <small class="form-text text-muted">Only used when objective is "Target FP"</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="use_existing_csvs" id="use_existing_csvs" 
+                                       class="form-check-input" checked>
+                                <label class="form-check-label" for="use_existing_csvs">
+                                    Use existing metrics CSV files
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="csv-inputs" class="mb-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="normal_csv">Normal Metrics CSV:</label>
+                                        <input type="text" name="normal_csv" id="normal_csv" 
+                                               class="form-control" 
+                                               value="output/university_logs/bert/test_normal_metrics.csv">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="abnormal_csv">Abnormal Metrics CSV:</label>
+                                        <input type="text" name="abnormal_csv" id="abnormal_csv" 
+                                               class="form-control"
+                                               value="output/university_logs/bert/test_abnormal_metrics.csv">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="time-inputs" class="mb-3" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="start_time">Start Time:</label>
+                                        <input type="datetime-local" name="start_time" id="start_time" 
+                                               class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="end_time">End Time:</label>
+                                        <input type="datetime-local" name="end_time" id="end_time" 
+                                               class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-play"></i> Run Calibration
+                            </button>
+                            <button type="button" id="preview-curves" class="btn btn-info ml-2">
+                                <i class="fas fa-chart-line"></i> Preview Curves
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card calibration-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Apply Manual Threshold</h6>
+                        <form method="post" action="{% url 'dashboard:apply_threshold' %}">
+                            {% csrf_token %}
+                            <div class="form-group mb-2">
+                                <select name="domain" class="form-control form-control-sm">
+                                    {% for domain in available_domains %}
+                                        <option value="{{ domain }}">{{ domain|title }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group mb-2">
+                                <input type="text" name="model_version" placeholder="Model Version" 
+                                       class="form-control form-control-sm" value="current">
+                            </div>
+                            <div class="form-group mb-2">
+                                <input type="number" name="threshold" placeholder="Threshold" 
+                                       class="form-control form-control-sm" step="0.0001" min="0" max="1">
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-secondary">Apply</button>
+                        </form>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6>Platform Settings</h6>
+                        <p class="small">
+                            <strong>Current Threshold:</strong> {{ platform_settings.anomaly_threshold|floatformat:4 }}<br>
+                            <strong>Last Updated:</strong> {{ platform_settings.updated_at|date:"M d, Y H:i" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Curves Chart -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card calibration-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Performance Curves</h5>
+                </div>
+                <div class="card-body">
+                    <div id="curves-chart" class="chart-container"></div>
+                    <div id="curves-loading" class="text-center" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i> Loading curves...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const useExistingCheckbox = document.getElementById('use_existing_csvs');
+    const csvInputs = document.getElementById('csv-inputs');
+    const timeInputs = document.getElementById('time-inputs');
+    const previewButton = document.getElementById('preview-curves');
+
+    // Toggle between CSV and time inputs
+    useExistingCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            csvInputs.style.display = 'block';
+            timeInputs.style.display = 'none';
+        } else {
+            csvInputs.style.display = 'none';
+            timeInputs.style.display = 'block';
+        }
+    });
+
+    // Preview curves functionality
+    previewButton.addEventListener('click', function() {
+        const domain = document.getElementById('domain').value;
+        const normalCsv = document.getElementById('normal_csv').value;
+        const abnormalCsv = document.getElementById('abnormal_csv').value;
+
+        if (useExistingCheckbox.checked && (!normalCsv || !abnormalCsv)) {
+            alert('Please specify both normal and abnormal CSV files.');
+            return;
+        }
+
+        loadCurves(domain, normalCsv, abnormalCsv);
+    });
+
+    async function loadCurves(domain, normalCsv, abnormalCsv) {
+        const loadingDiv = document.getElementById('curves-loading');
+        const chartDiv = document.getElementById('curves-chart');
+        
+        loadingDiv.style.display = 'block';
+        
+        try {
+            const params = new URLSearchParams({
+                domain: domain,
+                normal_csv: normalCsv,
+                abnormal_csv: abnormalCsv,
+                steps: 101
+            });
+
+            const response = await fetch(`{% url 'dashboard:get_calibration_curves' %}?${params}`);
+            const data = await response.json();
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            // Plot curves using Plotly
+            const curves = data.curve || [];
+            const thresholds = curves.map(p => p.th);
+            const precision = curves.map(p => p.P);
+            const recall = curves.map(p => p.R);
+            const f1 = curves.map(p => p.F1);
+
+            const traces = [];
+            if (precision.some(v => v !== null)) {
+                traces.push({
+                    x: thresholds,
+                    y: precision,
+                    name: 'Precision',
+                    mode: 'lines',
+                    line: {color: '#007bff'}
+                });
+            }
+            if (recall.some(v => v !== null)) {
+                traces.push({
+                    x: thresholds,
+                    y: recall,
+                    name: 'Recall',
+                    mode: 'lines',
+                    line: {color: '#28a745'}
+                });
+            }
+            if (f1.some(v => v !== null)) {
+                traces.push({
+                    x: thresholds,
+                    y: f1,
+                    name: 'F1 Score',
+                    mode: 'lines',
+                    line: {color: '#dc3545'}
+                });
+            }
+
+            const layout = {
+                title: `Performance Curves - ${domain.toUpperCase()}`,
+                xaxis: {title: 'Threshold'},
+                yaxis: {title: 'Score', range: [0, 1]},
+                margin: {t: 40, r: 20, b: 40, l: 40}
+            };
+
+            Plotly.newPlot('curves-chart', traces, layout);
+
+            // Highlight best threshold if available
+            if (data.best) {
+                const bestThreshold = data.best.th;
+                const bestLine = {
+                    x: [bestThreshold, bestThreshold],
+                    y: [0, 1],
+                    mode: 'lines',
+                    name: `Best Threshold (${bestThreshold.toFixed(4)})`,
+                    line: {color: '#ffc107', dash: 'dash', width: 3}
+                };
+                Plotly.addTraces('curves-chart', bestLine);
+            }
+
+        } catch (error) {
+            console.error('Error loading curves:', error);
+            chartDiv.innerHTML = `<div class="alert alert-danger">Error loading curves: ${error.message}</div>`;
+        } finally {
+            loadingDiv.style.display = 'none';
+        }
+    }
+});
+</script>
+{% endblock %}

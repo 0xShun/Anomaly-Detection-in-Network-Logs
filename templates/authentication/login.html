@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Log Anomaly Detection Platform{% endblock %}
+
+{% block auth_content %}
+<div class="container-fluid position-relative overflow-hidden">
+    <!-- Cybersecurity Background Animation -->
+    <div class="floating-circles">
+        <div class="circle circle-1">🔒</div>
+        <div class="circle circle-2">🛡️</div>
+        <div class="circle circle-3">🔐</div>
+        <div class="circle circle-4">⚡</div>
+        <div class="circle circle-5">🔒</div>
+        <div class="circle circle-6">🛡️</div>
+        <div class="circle circle-7">🔐</div>
+        <div class="circle circle-8">⚡</div>
+        <div class="circle circle-9">1</div>
+        <div class="circle circle-10">0</div>
+        <div class="circle circle-11">1</div>
+        <div class="circle circle-12">0</div>
+        <div class="circle circle-13">1</div>
+        <div class="circle circle-14">0</div>
+        <div class="circle circle-15">1</div>
+        <div class="circle circle-16">0</div>
+        <div class="circle circle-17">🔒</div>
+        <div class="circle circle-18">🛡️</div>
+        <div class="circle circle-19">🔐</div>
+        <div class="circle circle-20">⚡</div>
+        <div class="circle circle-21">🔒</div>
+        <div class="circle circle-22">🛡️</div>
+        <div class="circle circle-23">🔐</div>
+        <div class="circle circle-24">⚡</div>
+    </div>
+    
+    <div class="row justify-content-center align-items-center min-vh-100" style="background: linear-gradient(135deg, #8B0000 0%, #660000 100%);">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-lg login-card">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h4 class="text-dark fw-bold mb-3">Log Anomaly Detection Platform</h4>
+                        <h2 class="text-danger mb-2">
+                            <i class="fas fa-shield-alt"></i>
+                        </h2>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                Login
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Secure authentication required
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .min-vh-100 {
+        min-height: 100vh;
+    }
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+    .btn-danger {
+        background: linear-gradient(135deg, #8B0000 0%, #660000 100%);
+        border: none;
+        border-radius: 10px;
+    }
+    .btn-danger:hover {
+        background: linear-gradient(135deg, #7A0000 0%, #550000 100%);
+    }
+    .input-group-text {
+        background-color: #f8f9fa;
+        border-right: none;
+    }
+    .form-control {
+        border-left: none;
+    }
+    .form-control:focus {
+        box-shadow: none;
+        border-color: #ced4da;
+    }
+    
+    /* Cybersecurity Background Animation */
+    .floating-circles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    /* Digital Rain Effect (Matrix-style) */
+    .floating-circles::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 2px,
+                rgba(255, 255, 255, 0.03) 2px,
+                rgba(255, 255, 255, 0.03) 4px
+            ),
+            repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(255, 255, 255, 0.02) 2px,
+                rgba(255, 255, 255, 0.02) 4px
+            );
+        animation: digitalRain 8s linear infinite;
+    }
+
+    /* Floating Security Icons */
+    .circle {
+        position: absolute;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 1.2rem;
+        animation: securityFloat 10s ease-in-out infinite;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+
+    .circle::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        animation: securityPulse 6s ease-in-out infinite;
+    }
+
+    /* Security-themed icons and elements */
+    .circle-1 { content: '🔒'; top: 10%; left: 15%; animation-delay: 0s; }
+    .circle-2 { content: '🛡️'; top: 20%; left: 35%; animation-delay: 1s; }
+    .circle-3 { content: '🔐'; top: 30%; left: 55%; animation-delay: 2s; }
+    .circle-4 { content: '⚡'; top: 40%; left: 75%; animation-delay: 3s; }
+    .circle-5 { content: '🔒'; top: 50%; left: 25%; animation-delay: 4s; }
+    .circle-6 { content: '🛡️'; top: 60%; left: 45%; animation-delay: 5s; }
+    .circle-7 { content: '🔐'; top: 70%; left: 65%; animation-delay: 6s; }
+    .circle-8 { content: '⚡'; top: 80%; left: 85%; animation-delay: 7s; }
+
+    /* Binary Code Rain */
+    .circle-9 { content: '1'; top: 15%; left: 25%; animation-delay: 0.5s; font-size: 0.8rem; }
+    .circle-10 { content: '0'; top: 25%; left: 45%; animation-delay: 1.5s; font-size: 0.8rem; }
+    .circle-11 { content: '1'; top: 35%; left: 65%; animation-delay: 2.5s; font-size: 0.8rem; }
+    .circle-12 { content: '0'; top: 45%; left: 85%; animation-delay: 3.5s; font-size: 0.8rem; }
+    .circle-13 { content: '1'; top: 55%; left: 15%; animation-delay: 4.5s; font-size: 0.8rem; }
+    .circle-14 { content: '0'; top: 65%; left: 35%; animation-delay: 5.5s; font-size: 0.8rem; }
+    .circle-15 { content: '1'; top: 75%; left: 55%; animation-delay: 6.5s; font-size: 0.8rem; }
+    .circle-16 { content: '0'; top: 85%; left: 75%; animation-delay: 7.5s; font-size: 0.8rem; }
+
+    /* Additional security elements */
+    .circle-17 { content: '🔒'; top: 12%; left: 85%; animation-delay: 0.3s; }
+    .circle-18 { content: '🛡️'; top: 22%; left: 5%; animation-delay: 1.3s; }
+    .circle-19 { content: '🔐'; top: 32%; left: 95%; animation-delay: 2.3s; }
+    .circle-20 { content: '⚡'; top: 42%; left: 5%; animation-delay: 3.3s; }
+    .circle-21 { content: '🔒'; top: 52%; left: 95%; animation-delay: 4.3s; }
+    .circle-22 { content: '🛡️'; top: 62%; left: 5%; animation-delay: 5.3s; }
+    .circle-23 { content: '🔐'; top: 72%; left: 95%; animation-delay: 6.3s; }
+    .circle-24 { content: '⚡'; top: 82%; left: 5%; animation-delay: 7.3s; }
+
+    @keyframes securityFloat {
+        0%, 100% {
+            transform: translateY(0px) translateX(0px) rotate(0deg);
+            opacity: 0.6;
+        }
+        25% {
+            transform: translateY(-20px) translateX(15px) rotate(90deg);
+            opacity: 0.8;
+        }
+        50% {
+            transform: translateY(-10px) translateX(-10px) rotate(180deg);
+            opacity: 0.4;
+        }
+        75% {
+            transform: translateY(15px) translateX(20px) rotate(270deg);
+            opacity: 0.9;
+        }
+    }
+
+    @keyframes securityPulse {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 0.1;
+        }
+        50% {
+            transform: scale(1.3);
+            opacity: 0.3;
+        }
+    }
+
+    @keyframes digitalRain {
+        0% {
+            transform: translateY(-100%);
+        }
+        100% {
+            transform: translateY(100%);
+        }
+    }
+
+    /* Scanning Lines Effect */
+    .floating-circles::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.1) 50%,
+                transparent 100%
+            );
+        background-size: 200% 100%;
+        animation: scanningLine 4s ease-in-out infinite;
+    }
+
+    @keyframes scanningLine {
+        0% {
+            transform: translateX(-100%);
+        }
+        50% {
+            transform: translateX(100%);
+        }
+        100% {
+            transform: translateX(-100%);
+        }
+    }
+
+    /* Ensure login card is above the animated background */
+    .login-card {
+        position: relative;
+        z-index: 10;
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .circle {
+            display: none;
+        }
+        
+        .floating-circles::after {
+            display: none;
+        }
+    }
+</style>
+{% endblock %} 

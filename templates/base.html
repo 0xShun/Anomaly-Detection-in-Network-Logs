@@ -1,0 +1,152 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Log Anomaly Detection Platform{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+    <link rel="apple-touch-icon" href="{% static 'favicon.ico' %}">
+    <meta name="msapplication-TileColor" content="#8B0000">
+    <meta name="theme-color" content="#8B0000">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+    
+
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <!-- Top Header -->
+    <header class="top-header">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-bars hamburger-menu me-3" id="sidebarToggle"></i>
+                    <h4 class="mb-0 text-white">Log Anomaly Detection Platform</h4>
+                </div>
+                <div class="user-profile">
+                    <div class="profile-pic">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <div>
+                        <p class="user-name">{{ user.username|upper }}</p>
+                    </div>
+                    <i class="fas fa-chevron-down text-white-50"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container-fluid">
+            <!-- Dashboard Title and Subtitle -->
+            <div class="mb-4">
+                <h1 class="dashboard-title">{% block page_title %}Dashboard{% endblock %}</h1>
+            </div>
+            
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    
+    <!-- Mobile Sidebar (Hidden by default) -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">Navigation</h5>
+            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'overview' %}active{% endif %}" 
+                       href="{% url 'dashboard:overview' %}">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'log_details' %}active{% endif %}" 
+                       href="{% url 'dashboard:log_details' %}">
+                        <i class="fas fa-list me-2"></i>
+                        Log Details
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'analytics' in request.resolver_match.namespace %}active{% endif %}" 
+                       href="{% url 'analytics:analytics_dashboard' %}">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'monitoring' in request.resolver_match.namespace %}active{% endif %}" 
+                       href="{% url 'monitoring:system_monitoring' %}">
+                        <i class="fas fa-server me-2"></i>
+                        System Monitoring
+                    </a>
+                </li>
+                {% if user.is_staff %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'calibration' in request.resolver_match.url_name %}active{% endif %}" 
+                       href="{% url 'dashboard:calibration_dashboard' %}">
+                        <i class="fas fa-cogs me-2"></i>
+                        Model Calibration
+                    </a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'authentication:change_password' %}">
+                        <i class="fas fa-cog me-2"></i>
+                        Settings
+                    </a>
+                </li>
+                <li class="nav-item mt-3">
+                    <a class="nav-link text-danger" href="{% url 'authentication:logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i>
+                        Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    {% else %}
+        {% block auth_content %}{% endblock %}
+    {% endif %}
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Mobile sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            var offcanvas = new bootstrap.Offcanvas(document.getElementById('mobileSidebar'));
+            offcanvas.show();
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

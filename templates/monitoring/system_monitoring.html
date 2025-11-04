@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+
+{% block title %}System Monitoring - Log Anomaly Detection Platform{% endblock %}
+
+{% block page_title %}System Monitoring{% endblock %}
+
+{% block content %}
+<!-- System Status Overview -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="content-card">
+            <div class="card-header border-0 pb-3">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-server card-icon"></i>
+                    System Status Overview
+                </h5>
+            </div>
+            <div class="row g-4">
+                {% for service in system_status.services %}
+                <div class="col-lg-3 col-md-6">
+                    <div class="status-card">
+                        <div class="d-flex align-items-center">
+                            <div class="status-indicator status-{{ service.status }} me-3"></div>
+                            <div>
+                                <h6 class="mb-1">{{ service.name|title }}</h6>
+                                <span class="badge {% if service.status == 'running' %}bg-success{% elif service.status == 'stopped' %}bg-danger{% else %}bg-warning{% endif %}">
+                                    {{ service.status|title }}
+                                </span>
+                            </div>
+                        </div>
+                        {% if service.details %}
+                        <small class="text-muted mt-2 d-block">{{ service.details }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Metrics -->
+<div class="row mb-5">
+    <div class="col-lg-6 mb-4">
+        <div class="content-card">
+            <div class="card-header border-0 pb-3">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line card-icon"></i>
+                    Log Ingestion Rate
+                </h5>
+            </div>
+            <div class="metric-display">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3 class="text-primary mb-1">{{ logs_per_hour|default:"0" }}</h3>
+                        <p class="text-muted mb-0">Logs per hour</p>
+                    </div>
+                    <div class="metric-icon">
+                        <i class="fas fa-tachometer-alt fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="content-card">
+            <div class="card-header border-0 pb-3">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle card-icon"></i>
+                    Anomaly Detection Rate
+                </h5>
+            </div>
+            <div class="metric-display">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3 class="text-danger mb-1">{{ anomalies_per_hour|default:"0" }}</h3>
+                        <p class="text-muted mb-0">Anomalies per hour</p>
+                    </div>
+                    <div class="metric-icon">
+                        <i class="fas fa-shield-alt fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Health Dashboard -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="content-card">
+            <div class="card-header border-0 pb-3">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-heartbeat card-icon"></i>
+                    System Health Dashboard
+                </h5>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="health-metric">
+                        <div class="health-icon bg-success-subtle">
+                            <i class="fas fa-database text-success"></i>
+                        </div>
+                        <div class="health-info">
+                            <h6>Database</h6>
+                            <span class="badge bg-success">Healthy</span>
+                            <small class="text-muted d-block">Connection pool: 85%</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="health-metric">
+                        <div class="health-icon bg-info-subtle">
+                            <i class="fas fa-memory text-info"></i>
+                        </div>
+                        <div class="health-info">
+                            <h6>Memory Usage</h6>
+                            <span class="badge bg-info">Normal</span>
+                            <small class="text-muted d-block">Usage: 67%</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="health-metric">
+                        <div class="health-icon bg-warning-subtle">
+                            <i class="fas fa-hdd text-warning"></i>
+                        </div>
+                        <div class="health-info">
+                            <h6>Disk Space</h6>
+                            <span class="badge bg-warning">Warning</span>
+                            <small class="text-muted d-block">Usage: 78%</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-12">
+        <div class="content-card">
+            <div class="card-header border-0 pb-3">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock card-icon"></i>
+                    Recent System Activity
+                </h5>
+            </div>
+            <div class="activity-feed">
+                <div class="activity-item">
+                    <div class="activity-icon bg-success-subtle">
+                        <i class="fas fa-check text-success"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h6>System backup completed</h6>
+                        <p class="text-muted mb-1">Incremental backup finished successfully</p>
+                        <small class="text-muted">2 minutes ago</small>
+                    </div>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon bg-info-subtle">
+                        <i class="fas fa-sync text-info"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h6>Log rotation completed</h6>
+                        <p class="text-muted mb-1">Old log files archived and compressed</p>
+                        <small class="text-muted">15 minutes ago</small>
+                    </div>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon bg-warning-subtle">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h6>High CPU usage detected</h6>
+                        <p class="text-muted mb-1">CPU usage spiked to 85% for 5 minutes</p>
+                        <small class="text-muted">1 hour ago</small>
+                    </div>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon bg-success-subtle">
+                        <i class="fas fa-shield-alt text-success"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h6>Security scan completed</h6>
+                        <p class="text-muted mb-1">No vulnerabilities found in system</p>
+                        <small class="text-muted">2 hours ago</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* System Monitoring Specific Styles */
+.status-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.status-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.status-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-running {
+    background-color: #28a745;
+    box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.2);
+}
+
+.status-stopped {
+    background-color: #dc3545;
+    box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.2);
+}
+
+.status-error {
+    background-color: #ffc107;
+    box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.2);
+}
+
+.metric-display {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+}
+
+.metric-icon {
+    opacity: 0.7;
+}
+
+.health-metric {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.health-metric:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.health-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.health-info h6 {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.activity-feed {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.activity-content h6 {
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.activity-content p {
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .status-card {
+        padding: 1rem;
+    }
+    
+    .health-metric {
+        padding: 1rem;
+    }
+    
+    .health-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .activity-item {
+        padding: 0.75rem 0;
+    }
+    
+    .activity-icon {
+        width: 35px;
+        height: 35px;
+    }
+}
+</style>
+{% endblock %} 

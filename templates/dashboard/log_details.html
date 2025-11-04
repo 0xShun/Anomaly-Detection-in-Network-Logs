@@ -1,0 +1,548 @@
+{% extends 'base.html' %}
+
+{% block title %}Log Details - Log Anomaly Detection Platform{% endblock %}
+
+{% block page_title %}Log Details{% endblock %}
+
+{% block content %}
+<!-- Filter Controls -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="content-card filter-section">
+            <div class="card-header border-0 pb-0">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-filter card-icon"></i>
+                    Filter Logs
+                </h5>
+            </div>
+            <form method="get" class="row g-4 pt-3">
+                <div class="col-lg-3 col-md-6">
+                    <div class="form-group">
+                        <label for="host_ip" class="form-label fw-semibold">Host/IP</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="fas fa-server text-muted"></i>
+                            </span>
+                            <input type="text" class="form-control border-start-0" id="host_ip" name="host_ip" 
+                                   value="{{ request.GET.host_ip }}" placeholder="Enter host IP">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="form-group">
+                        <label for="log_type" class="form-label fw-semibold">Log Type</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="fas fa-tag text-muted"></i>
+                            </span>
+                            <select class="form-select border-start-0" id="log_type" name="log_type">
+                                <option value="">All Types</option>
+                                <option value="error" {% if request.GET.log_type == 'error' %}selected{% endif %}>Error</option>
+                                <option value="warning" {% if request.GET.log_type == 'warning' %}selected{% endif %}>Warning</option>
+                                <option value="info" {% if request.GET.log_type == 'info' %}selected{% endif %}>Info</option>
+                                <option value="debug" {% if request.GET.log_type == 'debug' %}selected{% endif %}>Debug</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="form-group">
+                        <label for="date_from" class="form-label fw-semibold">From Date</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="fas fa-calendar text-muted"></i>
+                            </span>
+                            <input type="datetime-local" class="form-control border-start-0" id="date_from" name="date_from" 
+                                   value="{{ request.GET.date_from }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="form-group">
+                        <label for="date_to" class="form-label fw-semibold">To Date</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="fas fa-calendar text-muted"></i>
+                            </span>
+                            <input type="datetime-local" class="form-control border-start-0" id="date_to" name="date_to" 
+                                   value="{{ request.GET.date_to }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary-custom px-4 py-2">
+                            <i class="fas fa-search me-2"></i>
+                            Filter Logs
+                        </button>
+                        <a href="{% url 'dashboard:log_details' %}" class="btn btn-secondary-custom px-4 py-2">
+                            <i class="fas fa-times me-2"></i>
+                            Clear Filters
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Log Statistics -->
+<div class="row mb-5">
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="content-card stat-card stat-card-primary">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon-wrapper bg-primary-subtle">
+                    <i class="fas fa-file-alt text-primary"></i>
+                </div>
+                <div class="ms-3">
+                    <h6 class="stat-label text-muted mb-1">Total Logs</h6>
+                    <h3 class="stat-value text-primary mb-0">{{ total_logs|default:"0" }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="content-card stat-card stat-card-danger">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon-wrapper bg-danger-subtle">
+                    <i class="fas fa-exclamation-circle text-danger"></i>
+                </div>
+                <div class="ms-3">
+                    <h6 class="stat-label text-muted mb-1">Error Logs</h6>
+                    <h3 class="stat-value text-danger mb-0">{{ error_count|default:"0" }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="content-card stat-card stat-card-warning">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon-wrapper bg-warning-subtle">
+                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                </div>
+                <div class="ms-3">
+                    <h6 class="stat-label text-muted mb-1">Warning Logs</h6>
+                    <h3 class="stat-value text-warning mb-0">{{ warning_count|default:"0" }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="content-card stat-card stat-card-info">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon-wrapper bg-info-subtle">
+                    <i class="fas fa-info-circle text-info"></i>
+                </div>
+                <div class="ms-3">
+                    <h6 class="stat-label text-muted mb-1">Info Logs</h6>
+                    <h3 class="stat-value text-info mb-0">{{ info_count|default:"0" }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="content-card table-section">
+            <div class="card-header border-0 pb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list card-icon"></i>
+                        Log Entries
+                    </h5>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-light text-dark px-3 py-2">
+                            <i class="fas fa-database me-1"></i>
+                            {{ page_obj.paginator.count|default:"0" }} total entries
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover modern-table">
+                    <thead>
+                        <tr>
+                            <th class="border-0 bg-light-subtle">
+                                <i class="fas fa-clock me-2"></i>Timestamp
+                            </th>
+                            <th class="border-0 bg-light-subtle">
+                                <i class="fas fa-server me-2"></i>Host/IP
+                            </th>
+                            <th class="border-0 bg-light-subtle">
+                                <i class="fas fa-tag me-2"></i>Log Type
+                            </th>
+                            <th class="border-0 bg-light-subtle">
+                                <i class="fas fa-source me-2"></i>Source
+                            </th>
+                            <th class="border-0 bg-light-subtle">
+                                <i class="fas fa-comment me-2"></i>Message
+                            </th>
+                            <th class="border-0 bg-light-subtle text-center">
+                                <i class="fas fa-cogs me-2"></i>Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in page_obj %}
+                        <tr class="table-row-hover">
+                            <td class="align-middle">
+                                <div class="d-flex flex-column">
+                                    <span class="fw-semibold">{{ log.timestamp|date:"M d, Y" }}</span>
+                                    <small class="text-muted">{{ log.timestamp|date:"H:i:s" }}</small>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge bg-secondary-subtle text-secondary px-3 py-2">
+                                    <i class="fas fa-server me-1"></i>
+                                    {{ log.host_ip }}
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge {% if log.log_type == 'error' %}bg-danger-subtle text-danger{% elif log.log_type == 'warning' %}bg-warning-subtle text-warning{% elif log.log_type == 'info' %}bg-info-subtle text-info{% else %}bg-secondary-subtle text-secondary{% endif %} px-3 py-2">
+                                    <i class="fas {% if log.log_type == 'error' %}fa-exclamation-circle{% elif log.log_type == 'warning' %}fa-exclamation-triangle{% elif log.log_type == 'info' %}fa-info-circle{% else %}fa-circle{% endif %} me-1"></i>
+                                    {{ log.log_type|default:"unknown"|title }}
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="text-muted">{{ log.source|default:"-" }}</span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="log-message" title="{{ log.log_message }}">
+                                    {{ log.log_message|truncatechars:80 }}
+                                </div>
+                            </td>
+                            <td class="align-middle text-center">
+                                <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="viewLogDetails({{ log.id }})" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="empty-state">
+                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">No log entries found</h5>
+                                    <p class="text-muted">Try adjusting your filters or check back later.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-4 border-top">
+                <div class="text-muted">
+                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries
+                </div>
+                <nav aria-label="Log pagination">
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link border-0" href="?page=1{% if request.GET.host_ip %}&host_ip={{ request.GET.host_ip }}{% endif %}{% if request.GET.log_type %}&log_type={{ request.GET.log_type }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" title="First Page">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link border-0" href="?page={{ page_obj.previous_page_number }}{% if request.GET.host_ip %}&host_ip={{ request.GET.host_ip }}{% endif %}{% if request.GET.log_type %}&log_type={{ request.GET.log_type }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" title="Previous Page">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link border-0 bg-primary">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link border-0" href="?page={{ num }}{% if request.GET.host_ip %}&host_ip={{ request.GET.host_ip }}{% endif %}{% if request.GET.log_type %}&log_type={{ request.GET.log_type }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link border-0" href="?page={{ page_obj.next_page_number }}{% if request.GET.host_ip %}&host_ip={{ request.GET.host_ip }}{% endif %}{% if request.GET.log_type %}&log_type={{ request.GET.log_type }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" title="Next Page">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link border-0" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.host_ip %}&host_ip={{ request.GET.host_ip }}{% endif %}{% if request.GET.log_type %}&log_type={{ request.GET.log_type }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" title="Last Page">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Log Details Modal -->
+<div class="modal fade" id="logDetailsModal" tabindex="-1" aria-labelledby="logDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="logDetailsModalLabel">Log Entry Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="logDetailsContent">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Enhanced Modern Styles for Log Details */
+.filter-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.stat-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.stat-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.table-section {
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.modern-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.modern-table thead th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: none;
+    padding: 1rem 0.75rem;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modern-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table-row-hover:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.001);
+}
+
+.modern-table tbody td {
+    padding: 1rem 0.75rem;
+    border: none;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.log-message {
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.log-message:hover {
+    color: var(--primary-red);
+}
+
+.empty-state {
+    padding: 3rem 1rem;
+}
+
+.empty-state i {
+    opacity: 0.5;
+}
+
+/* Enhanced Form Styles */
+.form-group {
+    margin-bottom: 0;
+}
+
+.input-group-text {
+    border: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+}
+
+.form-control, .form-select {
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-red);
+    box-shadow: 0 0 0 0.2rem rgba(139, 0, 0, 0.15);
+}
+
+/* Enhanced Badge Styles */
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.bg-light-subtle {
+    background-color: #f8f9fa !important;
+}
+
+.bg-primary-subtle {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+}
+
+.bg-danger-subtle {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+.bg-warning-subtle {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+}
+
+.bg-info-subtle {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+}
+
+.bg-secondary-subtle {
+    background-color: rgba(108, 117, 125, 0.1) !important;
+}
+
+/* Enhanced Button Styles */
+.btn-primary-custom, .btn-secondary-custom {
+    border-radius: 8px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary-custom:hover, .btn-secondary-custom:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Enhanced Pagination */
+.pagination .page-link {
+    border-radius: 6px;
+    margin: 0 2px;
+    transition: all 0.2s ease;
+}
+
+.pagination .page-link:hover {
+    background-color: var(--primary-red);
+    border-color: var(--primary-red);
+    color: white;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--primary-red);
+    border-color: var(--primary-red);
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+    
+    .modern-table thead th {
+        font-size: 0.75rem;
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .modern-table tbody td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .log-message {
+        max-width: 200px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function viewLogDetails(logId) {
+    // This function would typically make an AJAX call to get log details
+    // For now, we'll show a placeholder
+    document.getElementById('logDetailsContent').innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+            <p class="mt-2">Loading log details...</p>
+        </div>
+    `;
+    
+    // Show the modal
+    var modal = new bootstrap.Modal(document.getElementById('logDetailsModal'));
+    modal.show();
+    
+    // In a real implementation, you would make an AJAX call here:
+    // fetch(`/dashboard/api/log/${logId}/`)
+    //     .then(response => response.json())
+    //     .then(data => {
+    //         document.getElementById('logDetailsContent').innerHTML = `
+    //             <dl class="row">
+    //                 <dt class="col-sm-3">Timestamp:</dt>
+    //                 <dd class="col-sm-9">${data.timestamp}</dd>
+    //                 <dt class="col-sm-3">Host/IP:</dt>
+    //                 <dd class="col-sm-9">${data.host_ip}</dd>
+    //                 <dt class="col-sm-3">Log Type:</dt>
+    //                 <dd class="col-sm-9">${data.log_type}</dd>
+    //                 <dt class="col-sm-3">Source:</dt>
+    //                 <dd class="col-sm-9">${data.source}</dd>
+    //                 <dt class="col-sm-3">Message:</dt>
+    //                 <dd class="col-sm-9">${data.log_message}</dd>
+    //             </dl>
+    //         `;
+    //     });
+}
+</script>
+{% endblock %} 

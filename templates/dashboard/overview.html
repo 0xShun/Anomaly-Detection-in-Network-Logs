@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Log Anomaly Detection Platform{% endblock %}
+
+{% block page_title %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title text-muted mb-1">Total Logs Processed</h5>
+                    <h2 class="mb-0 text-primary" id="total-logs">{{ total_logs|default:"0" }}</h2>
+                </div>
+                <div class="align-self-center">
+                    <i class="fas fa-file-alt fa-2x text-primary"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title text-muted mb-1">Total Anomalies Detected</h5>
+                    <h2 class="mb-0 text-danger" id="total-anomalies">{{ total_anomalies|default:"0" }}</h2>
+                </div>
+                <div class="align-self-center">
+                    <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title text-muted mb-1">System Status</h5>
+                    <h2 class="mb-0" id="system-status">
+                        <span class="status-indicator status-{{ system_status.overall }}"></span>
+                        {{ system_status.overall|title }}
+                    </h2>
+                </div>
+                <div class="align-self-center">
+                    <i class="fas fa-server fa-2x text-success"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+<!-- Pipeline Runner -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title text-muted mb-1">Run Demo Pipeline</h5>
+                    <p class="mb-0 text-muted">Populate the database with sample data and run a quick performance analysis. Uses Django management commands.</p>
+                </div>
+                <div class="align-self-center">
+                    <button id="run-pipeline-btn" class="btn btn-primary">Run Demo Pipeline</button>
+                </div>
+            </div>
+            <div class="mt-3">
+                <div id="pipeline-status" class="small text-muted">Status: Not started</div>
+                <pre id="pipeline-output" style="max-height:200px;overflow:auto;background:#f8f9fa;padding:8px;border-radius:4px;">No output yet</pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Real-time Anomaly Feed -->
+<div class="row">
+    <div class="col-12">
+        <div class="content-card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-broadcast-tower card-icon"></i>
+                    Real-time Anomaly Feed
+                </h5>
+                <div>
+                    <span class="badge bg-success" id="connection-status">
+                        <i class="fas fa-circle me-1"></i>
+                        Connected
+                    </span>
+                    <button class="btn btn-sm btn-outline-primary ms-2" onclick="refreshFeed()">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Host/IP</th>
+                            <th>Log Message</th>
+                            <th>Anomaly Score</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="anomaly-feed">
+                        {% for anomaly in recent_anomalies %}
+                        <tr>
+                            <td>{{ anomaly.log_entry.timestamp|date:"M d, H:i:s" }}</td>
+                            <td>
+                                <span class="badge bg-secondary">{{ anomaly.log_entry.host_ip }}</span>
+                            </td>
+                            <td>
+                                <div class="text-truncate" style="max-width: 300px;" title="{{ anomaly.log_entry.log_message }}">
+                                    {{ anomaly.log_entry.log_message }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge {% if anomaly.anomaly_score > 0.8 %}bg-danger{% elif anomaly.anomaly_score > 0.6 %}bg-warning{% else %}bg-info{% endif %}">
+                                    {{ anomaly.anomaly_score|floatformat:3 }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-danger">Anomaly</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">
+                                <i class="fas fa-inbox fa-2x mb-2"></i>
+                                <br>
+                                No anomalies detected yet
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Status Details -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="content-card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-cogs card-icon"></i>
+                    System Status Details
+                </h5>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="status-indicator status-{{ system_status.kafka.status }}"></span>
+                        <strong>Kafka Broker:</strong>
+                        <span class="ms-2">{{ system_status.kafka.status|title }}</span>
+                    </div>
+                    <small class="text-muted">{{ system_status.kafka.details }}</small>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="status-indicator status-{{ system_status.zookeeper.status }}"></span>
+                        <strong>Zookeeper:</strong>
+                        <span class="ms-2">{{ system_status.zookeeper.status|title }}</span>
+                    </div>
+                    <small class="text-muted">{{ system_status.zookeeper.details }}</small>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="status-indicator status-{{ system_status.consumer.status }}"></span>
+                        <strong>Consumer Process:</strong>
+                        <span class="ms-2">{{ system_status.consumer.status|title }}</span>
+                    </div>
+                    <small class="text-muted">{{ system_status.consumer.details }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Real-time updates
+let updateInterval;
+
+function updateDashboard() {
+    fetch('{% url "dashboard:api_dashboard_data" %}')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('total-logs').textContent = data.total_logs;
+            document.getElementById('total-anomalies').textContent = data.total_anomalies;
+            
+            // Update system status
+            const statusElement = document.getElementById('system-status');
+            statusElement.innerHTML = `
+                <span class="status-indicator status-${data.system_status.overall}"></span>
+                ${data.system_status.overall.charAt(0).toUpperCase() + data.system_status.overall.slice(1)}
+            `;
+            
+            // Update anomaly feed
+            updateAnomalyFeed(data.recent_anomalies);
+        })
+        .catch(error => {
+            console.error('Error updating dashboard:', error);
+            document.getElementById('connection-status').className = 'badge bg-danger';
+            document.getElementById('connection-status').innerHTML = '<i class="fas fa-circle me-1"></i>Disconnected';
+        });
+}
+
+function updateAnomalyFeed(anomalies) {
+    const tbody = document.getElementById('anomaly-feed');
+    
+    if (anomalies.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted">
+                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                    <br>
+                    No anomalies detected yet
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = anomalies.map(anomaly => `
+        <tr>
+            <td>${new Date(anomaly.timestamp).toLocaleString()}</td>
+            <td><span class="badge bg-secondary">${anomaly.host_ip}</span></td>
+            <td>
+                <div class="text-truncate" style="max-width: 300px;" title="${anomaly.log_message}">
+                    ${anomaly.log_message}
+                </div>
+            </td>
+            <td>
+                <span class="badge ${anomaly.anomaly_score > 0.8 ? 'bg-danger' : anomaly.anomaly_score > 0.6 ? 'bg-warning' : 'bg-info'}">
+                    ${parseFloat(anomaly.anomaly_score).toFixed(3)}
+                </span>
+            </td>
+            <td><span class="badge bg-danger">Anomaly</span></td>
+        </tr>
+    `).join('');
+}
+
+function refreshFeed() {
+    updateDashboard();
+}
+
+// Start real-time updates
+document.addEventListener('DOMContentLoaded', function() {
+    updateDashboard();
+    updateInterval = setInterval(updateDashboard, 5000); // Update every 5 seconds
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (updateInterval) {
+        clearInterval(updateInterval);
+    }
+});
+
+// Pipeline runner JS
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+async function startPipeline() {
+    const btn = document.getElementById('run-pipeline-btn');
+    btn.disabled = true;
+    btn.textContent = 'Starting...';
+
+    const csrftoken = getCookie('csrftoken');
+
+    try {
+        const res = await fetch('{% url "dashboard:run_pipeline" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+
+        if (res.status === 409) {
+            document.getElementById('pipeline-status').textContent = 'Status: Already running';
+            btn.textContent = 'Run Demo Pipeline';
+            btn.disabled = false;
+            return;
+        }
+
+        const data = await res.json();
+        if (data.status === 'started') {
+            document.getElementById('pipeline-status').textContent = 'Status: Running';
+            pollPipelineStatus();
+            btn.textContent = 'Running...';
+        } else {
+            document.getElementById('pipeline-status').textContent = 'Status: ' + (data.status || 'unknown');
+            btn.textContent = 'Run Demo Pipeline';
+            btn.disabled = false;
+        }
+    } catch (e) {
+        console.error('Pipeline start error', e);
+        document.getElementById('pipeline-status').textContent = 'Status: Error starting pipeline';
+        btn.textContent = 'Run Demo Pipeline';
+        btn.disabled = false;
+    }
+}
+
+let pipelinePollInterval = null;
+async function pollPipelineStatus() {
+    // Clear any existing poll
+    if (pipelinePollInterval) {
+        clearInterval(pipelinePollInterval);
+    }
+
+    const update = async () => {
+        try {
+            const res = await fetch('{% url "dashboard:pipeline_status" %}');
+            const data = await res.json();
+            const s = data.status || {};
+            const statusText = s.status ? s.status : 'unknown';
+            document.getElementById('pipeline-status').textContent = 'Status: ' + statusText;
+            document.getElementById('pipeline-output').textContent = data.output_preview || '';
+
+            if (s.status === 'completed' || s.status === 'failed') {
+                clearInterval(pipelinePollInterval);
+                const btn = document.getElementById('run-pipeline-btn');
+                btn.disabled = false;
+                btn.textContent = 'Run Demo Pipeline';
+            }
+        } catch (e) {
+            console.error('Error fetching pipeline status', e);
+        }
+    };
+
+    // Poll immediately and then every 3 seconds
+    update();
+    pipelinePollInterval = setInterval(update, 3000);
+}
+
+document.getElementById('run-pipeline-btn').addEventListener('click', startPipeline);
+</script>
+{% endblock %} 
