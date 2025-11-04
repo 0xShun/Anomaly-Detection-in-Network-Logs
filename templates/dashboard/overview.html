@@ -6,47 +6,50 @@
 
 {% block content %}
 <!-- Summary Cards -->
-<div class="row mb-4">
+<div class="row mb-4 g-4">
     <div class="col-md-4">
-        <div class="content-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="card-title text-muted mb-1">Total Logs Processed</h5>
-                    <h2 class="mb-0 text-primary" id="total-logs">{{ total_logs|default:"0" }}</h2>
+        <div class="content-card h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <p class="text-muted mb-2 text-uppercase small fw-bold" style="letter-spacing: 1px;">Total Logs</p>
+                    <h2 class="mb-0 text-primary fw-bold display-6" id="total-logs">{{ total_logs|default:"0" }}</h2>
+                    <small class="text-success"><i class="fas fa-arrow-up me-1"></i>Processed</small>
                 </div>
                 <div class="align-self-center">
-                    <i class="fas fa-file-alt fa-2x text-primary"></i>
+                    <i class="fas fa-file-alt fa-3x text-primary" style="opacity: 0.15;"></i>
                 </div>
             </div>
         </div>
     </div>
     
     <div class="col-md-4">
-        <div class="content-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="card-title text-muted mb-1">Total Anomalies Detected</h5>
-                    <h2 class="mb-0 text-danger" id="total-anomalies">{{ total_anomalies|default:"0" }}</h2>
+        <div class="content-card h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <p class="text-muted mb-2 text-uppercase small fw-bold" style="letter-spacing: 1px;">Anomalies</p>
+                    <h2 class="mb-0 text-danger fw-bold display-6" id="total-anomalies">{{ total_anomalies|default:"0" }}</h2>
+                    <small class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>Detected</small>
                 </div>
                 <div class="align-self-center">
-                    <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                    <i class="fas fa-exclamation-triangle fa-3x text-danger" style="opacity: 0.15;"></i>
                 </div>
             </div>
         </div>
     </div>
     
     <div class="col-md-4">
-        <div class="content-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="card-title text-muted mb-1">System Status</h5>
-                    <h2 class="mb-0" id="system-status">
+        <div class="content-card h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <p class="text-muted mb-2 text-uppercase small fw-bold" style="letter-spacing: 1px;">System</p>
+                    <h2 class="mb-0 fw-bold display-6" id="system-status">
                         <span class="status-indicator status-{{ system_status.overall }}"></span>
                         {{ system_status.overall|title }}
                     </h2>
+                    <small class="text-success"><i class="fas fa-check-circle me-1"></i>Operational</small>
                 </div>
                 <div class="align-self-center">
-                    <i class="fas fa-server fa-2x text-success"></i>
+                    <i class="fas fa-server fa-3x text-success" style="opacity: 0.15;"></i>
                 </div>
             </div>
         </div>

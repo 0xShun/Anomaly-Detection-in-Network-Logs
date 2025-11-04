@@ -32,54 +32,70 @@
         <div class="circle circle-24">⚡</div>
     </div>
     
-    <div class="row justify-content-center align-items-center min-vh-100" style="background: linear-gradient(135deg, #8B0000 0%, #660000 100%);">
-        <div class="col-md-6 col-lg-4">
-            <div class="card shadow-lg login-card">
+    <div class="row justify-content-center align-items-center min-vh-100 login-bg">
+        <div class="col-md-6 col-lg-5 col-xl-4">
+            <div class="card shadow-lg login-card" style="animation: fadeInUp 0.6s ease-out;">
                 <div class="card-body p-5">
-                    <div class="text-center mb-4">
-                        <h4 class="text-dark fw-bold mb-3">Log Anomaly Detection Platform</h4>
-                        <h2 class="text-danger mb-2">
-                            <i class="fas fa-shield-alt"></i>
-                        </h2>
+                    <div class="text-center mb-5">
+                        <div class="mb-3">
+                            <i class="fas fa-shield-alt fa-4x" style="background: linear-gradient(135deg, #8B0000 0%, #660000 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+                        </div>
+                        <h3 class="fw-bold mb-2" style="color: #343a40; letter-spacing: -0.5px;">Welcome Back</h3>
+                        <p class="text-muted mb-0">Log Anomaly Detection Platform</p>
                     </div>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
                     
                     <form method="post">
                         {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Username</label>
+                        <div class="mb-4">
+                            <label for="username" class="form-label fw-semibold">Username</label>
                             <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="fas fa-user"></i>
+                                <span class="input-group-text border-0 bg-light">
+                                    <i class="fas fa-user text-muted"></i>
                                 </span>
-                                <input type="text" class="form-control" id="username" name="username" required>
+                                <input type="text" class="form-control border-start-0 ps-0" id="username" name="username" required placeholder="Enter your username">
                             </div>
                         </div>
                         
                         <div class="mb-4">
-                            <label for="password" class="form-label">Password</label>
+                            <label for="password" class="form-label fw-semibold">Password</label>
                             <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="fas fa-lock"></i>
+                                <span class="input-group-text border-0 bg-light">
+                                    <i class="fas fa-lock text-muted"></i>
                                 </span>
-                                <input type="password" class="form-control" id="password" name="password" required>
+                                <input type="password" class="form-control border-start-0 ps-0" id="password" name="password" required placeholder="Enter your password">
                             </div>
                         </div>
                         
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-danger btn-lg">
+                        <div class="d-grid mb-4">
+                            <button type="submit" class="btn btn-login btn-lg py-3">
                                 <i class="fas fa-sign-in-alt me-2"></i>
-                                Login
+                                Sign In
                             </button>
                         </div>
                     </form>
                     
-                    <div class="text-center mt-4">
-                        <small class="text-muted">
-                            <i class="fas fa-info-circle me-1"></i>
-                            Secure authentication required
+                    <div class="text-center">
+                        <small class="text-muted d-flex align-items-center justify-content-center">
+                            <i class="fas fa-shield-alt me-2 text-success"></i>
+                            Secured with enterprise-grade authentication
                         </small>
                     </div>
                 </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <small class="text-white-50">
+                    <i class="fas fa-copyright me-1"></i> 2025 LogBERT Platform. All rights reserved.
+                </small>
             </div>
         </div>
     </div>
