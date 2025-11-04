@@ -40,16 +40,44 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
                     <i class="fas fa-bars hamburger-menu me-3" id="sidebarToggle"></i>
-                    <h4 class="mb-0 text-white">Log Anomaly Detection Platform</h4>
+                    <div class="brand-container">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        <h4 class="mb-0 text-white brand-title">LogBERT</h4>
+                        <span class="brand-subtitle">Monitoring</span>
+                    </div>
                 </div>
-                <div class="user-profile">
-                    <div class="profile-pic">
-                        {{ user.username|first|upper }}
+                <div class="dropdown">
+                    <div class="user-profile" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="profile-pic">
+                            {{ user.username|first|upper }}
+                        </div>
+                        <div class="user-info">
+                            <p class="user-name mb-0">{{ user.get_full_name|default:user.username }}</p>
+                            <small class="user-role">{% if user.is_superuser %}Administrator{% elif user.is_staff %}Staff{% else %}User{% endif %}</small>
+                        </div>
+                        <i class="fas fa-chevron-down ms-2"></i>
                     </div>
-                    <div>
-                        <p class="user-name">{{ user.username|upper }}</p>
-                    </div>
-                    <i class="fas fa-chevron-down text-white-50"></i>
+                    <ul class="dropdown-menu dropdown-menu-end user-dropdown-menu" aria-labelledby="userDropdown">
+                        <li class="dropdown-header">
+                            <div class="d-flex align-items-center">
+                                <div class="profile-pic-small me-2">
+                                    {{ user.username|first|upper }}
+                                </div>
+                                <div>
+                                    <strong>{{ user.get_full_name|default:user.username }}</strong>
+                                    <br><small class="text-muted">{{ user.email }}</small>
+                                </div>
+                            </div>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'dashboard:overview' %}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                        {% if user.is_staff %}
+                        <li><a class="dropdown-item" href="/admin/"><i class="fas fa-cog me-2"></i>Admin Panel</a></li>
+                        {% endif %}
+                        <li><a class="dropdown-item" href="{% url 'authentication:change_password' %}"><i class="fas fa-key me-2"></i>Change Password</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="{% url 'authentication:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                    </ul>
                 </div>
             </div>
         </div>
