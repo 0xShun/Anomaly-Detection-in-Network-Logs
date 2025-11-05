@@ -108,7 +108,7 @@
                         <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
                         <h5 class="text-muted">Pie Chart</h5>
                         <p class="text-muted">Distribution of log types</p>
-                        <button class="btn btn-secondary-custom" onclick="loadPieChart()">
+                        <button class="btn btn-primary-custom" onclick="loadTypeChart()">
                             <i class="fas fa-sync-alt me-2"></i>
                             Load Chart Data
                         </button>
@@ -375,4 +375,159 @@ function loadPieChart() {
     }
 }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let volumeChart = null;
+let typeChart = null;
+
+function loadChart() {
+    // Show loading state
+    document.querySelector('.chart-container').innerHTML = `
+        <div class="d-flex align-items-center justify-content-center h-100">
+            <div class="text-center">
+                <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+                <h5 class="text-primary">Loading chart data...</h5>
+            </div>
+        </div>
+    `;
+    
+    // Fetch log volume over time data (line chart)
+    fetch('/analytics/api/chart-data/?type=line&days=7')
+        .then(response => response.json())
+        .then(data => {
+            // Create canvas for chart
+            document.querySelector('.chart-container').innerHTML = '<canvas id="volumeChart"></canvas>';
+            
+            const ctx = document.getElementById('volumeChart').getContext('2d');
+            volumeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.data.map(d => d.date || d[data.x_axis]),
+                    datasets: [{
+                        label: 'Anomalies Detected',
+                        data: data.data.map(d => d.count || d[data.y_axis]),
+                        borderColor: '#8B1538',
+                        backgroundColor: 'rgba(139, 21, 56, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        title: {
+                            display: true,
+                            text: data.title || 'Log Volume Over Time'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading chart:', error);
+            document.querySelector('.chart-container').innerHTML = `
+                <div class="d-flex align-items-center justify-content-center h-100">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                        <h5 class="text-danger">Failed to load chart</h5>
+                        <button class="btn btn-primary-custom mt-3" onclick="loadChart()">
+                            <i class="fas fa-retry me-2"></i>Retry
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+}
+
+function loadTypeChart() {
+    // Show loading state
+    const container = document.querySelector('.col-lg-4 .chart-container');
+    container.innerHTML = `
+        <div class="d-flex align-items-center justify-content-center h-100">
+            <div class="text-center">
+                <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+                <h5 class="text-primary">Loading chart data...</h5>
+            </div>
+        </div>
+    `;
+    
+    // Fetch log type distribution (pie chart)
+    fetch('/analytics/api/chart-data/?type=pie&days=7')
+        .then(response => response.json())
+        .then(data => {
+            // Create canvas for chart
+            container.innerHTML = '<canvas id="typeChart"></canvas>';
+            
+            const ctx = document.getElementById('typeChart').getContext('2d');
+            
+            // Extract data
+            const labels = data.data.map(d => (d.log_entry__log_type || d[data.label] || 'Unknown').toUpperCase());
+            const values = data.data.map(d => d.count || d[data.value]);
+            
+            typeChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: [
+                            '#8B1538',
+                            '#dc3545',
+                            '#ffc107',
+                            '#17a2b8',
+                            '#6c757d'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: data.title || 'Log Type Distribution'
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading type chart:', error);
+            container.innerHTML = `
+                <div class="d-flex align-items-center justify-content-center h-100">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                        <h5 class="text-danger">Failed to load chart</h5>
+                        <button class="btn btn-primary-custom mt-3" onclick="loadTypeChart()">
+                            <i class="fas fa-retry me-2"></i>Retry
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+}
+</script>
 {% endblock %} 
