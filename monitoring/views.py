@@ -11,23 +11,28 @@ import json
 def system_monitoring(request):
     """System monitoring page"""
     from dashboard.models import LogEntry, Anomaly
+    from api.models import LocalSystemStatus
     from datetime import timedelta
     import psutil
     import os
     
-    # Get current system status with LIVE checks (not from DB)
-    system_status = get_system_status()
-    
-    # Update the database with current status
-    for service_name in ['kafka', 'zookeeper', 'consumer']:
-        if service_name in system_status:
-            SystemStatusModel.objects.update_or_create(
-                service_name=service_name,
-                defaults={
-                    'status': system_status[service_name]['status'],
-                    'details': system_status[service_name]['details']
-                }
-            )
+    # Get system status from API model (updated by local network via API)
+    system_status_obj = LocalSystemStatus.get_latest()
+    system_status = {
+        'overall': system_status_obj.overall_status,
+        'kafka': {
+            'status': system_status_obj.kafka_status,
+            'details': system_status_obj.kafka_details
+        },
+        'zookeeper': {
+            'status': system_status_obj.zookeeper_status,
+            'details': system_status_obj.zookeeper_details
+        },
+        'consumer': {
+            'status': system_status_obj.consumer_status,
+            'details': system_status_obj.consumer_details
+        },
+    }
     
     # Get historical status data
     status_history = SystemStatusModel.objects.order_by('-last_check')[:20]

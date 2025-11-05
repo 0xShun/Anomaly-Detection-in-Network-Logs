@@ -14,6 +14,7 @@ urlpatterns = [
     # Status and health endpoints
     path('status/', views.api_status, name='api-status'),
     path('health/', views.health_check, name='api-health'),
+    path('system-status/', views.system_status, name='system-status'),
     
     # Include router URLs
     path('', include(router.urls)),

@@ -198,3 +198,84 @@ def health_check(request):
         'timestamp': timezone.now().isoformat(),
         'message': 'Health check recorded'
     }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST', 'GET'])
+@authentication_classes([APIKeyAuthentication])
+@permission_classes([IsAuthenticated])
+def system_status(request):
+    """
+    POST /api/system-status/
+    
+    Local network sends Kafka/Zookeeper/Consumer status updates.
+    Request body:
+        {
+            "kafka": {"status": "running", "details": "Broker accessible"},
+            "zookeeper": {"status": "running", "details": "Port 2181 open"},
+            "consumer": {"status": "running", "details": "PID 12345"}
+        }
+    
+    GET /api/system-status/
+    
+    Retrieve current system status for dashboard display.
+    """
+    from .models import LocalSystemStatus
+    
+    if request.method == 'POST':
+        data = request.data
+        
+        # Get or create status record
+        system_status_obj = LocalSystemStatus.get_latest()
+        
+        # Update Kafka status
+        kafka = data.get('kafka', {})
+        system_status_obj.kafka_status = kafka.get('status', 'not_applicable')
+        system_status_obj.kafka_details = kafka.get('details', 'No details provided')
+        
+        # Update Zookeeper status
+        zookeeper = data.get('zookeeper', {})
+        system_status_obj.zookeeper_status = zookeeper.get('status', 'not_applicable')
+        system_status_obj.zookeeper_details = zookeeper.get('details', 'No details provided')
+        
+        # Update Consumer status
+        consumer = data.get('consumer', {})
+        system_status_obj.consumer_status = consumer.get('status', 'not_applicable')
+        system_status_obj.consumer_details = consumer.get('details', 'No details provided')
+        
+        # Determine overall status
+        statuses = [system_status_obj.kafka_status, system_status_obj.zookeeper_status, system_status_obj.consumer_status]
+        if all(s == 'running' for s in statuses):
+            system_status_obj.overall_status = 'running'
+        elif any(s == 'error' for s in statuses):
+            system_status_obj.overall_status = 'error'
+        elif any(s == 'stopped' for s in statuses):
+            system_status_obj.overall_status = 'stopped'
+        else:
+            system_status_obj.overall_status = 'not_applicable'
+        
+        system_status_obj.save()
+        
+        return Response({
+            'status': 'updated',
+            'timestamp': system_status_obj.last_updated.isoformat(),
+            'overall_status': system_status_obj.overall_status
+        }, status=status.HTTP_200_OK)
+    
+    else:  # GET
+        system_status_obj = LocalSystemStatus.get_latest()
+        return Response({
+            'overall': system_status_obj.overall_status,
+            'kafka': {
+                'status': system_status_obj.kafka_status,
+                'details': system_status_obj.kafka_details
+            },
+            'zookeeper': {
+                'status': system_status_obj.zookeeper_status,
+                'details': system_status_obj.zookeeper_details
+            },
+            'consumer': {
+                'status': system_status_obj.consumer_status,
+                'details': system_status_obj.consumer_details
+            },
+            'last_updated': system_status_obj.last_updated.isoformat()
+        }, status=status.HTTP_200_OK)

@@ -158,3 +158,47 @@ class RawModelOutput(models.Model):
     
     def __str__(self):
         return f"RawOutput {self.id}: {self.model_name} - {'Anomaly' if self.is_anomaly else 'Normal'}"
+
+
+class LocalSystemStatus(models.Model):
+    """Status of Kafka/Zookeeper/Consumer running on local network."""
+    
+    STATUS_CHOICES = [
+        ('running', 'Running'),
+        ('stopped', 'Stopped'),
+        ('error', 'Error'),
+        ('not_applicable', 'Not Applicable'),
+    ]
+    
+    # Kafka status
+    kafka_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_applicable')
+    kafka_details = models.TextField(default='No status received from local network')
+    
+    # Zookeeper status
+    zookeeper_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_applicable')
+    zookeeper_details = models.TextField(default='No status received from local network')
+    
+    # Consumer status
+    consumer_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_applicable')
+    consumer_details = models.TextField(default='No status received from local network')
+    
+    # Overall status (derived from components)
+    overall_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_applicable')
+    
+    # Metadata
+    last_updated = models.DateTimeField(auto_now=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-last_updated']
+        verbose_name = 'Local System Status'
+        verbose_name_plural = 'Local System Statuses'
+    
+    def __str__(self):
+        return f"System Status (updated: {self.last_updated}): {self.overall_status}"
+    
+    @classmethod
+    def get_latest(cls):
+        """Get or create the latest system status record."""
+        status, created = cls.objects.get_or_create(id=1)
+        return status

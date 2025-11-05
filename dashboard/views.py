@@ -38,18 +38,24 @@ def dashboard_overview(request):
     # Get cached recent anomalies
     recent_anomalies_data = get_cached_recent_anomalies(limit=10)
     
-    # Get system status (only available in local environment with Kafka)
-    try:
-        from monitoring.utils import get_system_status
-        system_status = get_system_status()
-    except ImportError:
-        # PythonAnywhere deployment - Kafka not available
-        system_status = {
-            'overall': 'not_applicable',
-            'kafka': {'status': 'not_applicable', 'details': 'Runs on local network'},
-            'zookeeper': {'status': 'not_applicable', 'details': 'Runs on local network'},
-            'consumer': {'status': 'not_applicable', 'details': 'Runs on local network'},
-        }
+    # Get system status from API model (updated by local network)
+    from api.models import LocalSystemStatus
+    system_status_obj = LocalSystemStatus.get_latest()
+    system_status = {
+        'overall': system_status_obj.overall_status,
+        'kafka': {
+            'status': system_status_obj.kafka_status,
+            'details': system_status_obj.kafka_details
+        },
+        'zookeeper': {
+            'status': system_status_obj.zookeeper_status,
+            'details': system_status_obj.zookeeper_details
+        },
+        'consumer': {
+            'status': system_status_obj.consumer_status,
+            'details': system_status_obj.consumer_details
+        },
+    }
     
     # Get platform settings (cache this too)
     settings_cache_key = 'platform_settings'
