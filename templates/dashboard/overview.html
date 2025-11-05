@@ -198,9 +198,26 @@
 let updateInterval;
 
 function updateDashboard() {
-    fetch('{% url "dashboard:api_dashboard_data" %}')
-        .then(response => response.json())
+    fetch('{% url "dashboard:api_dashboard_data" %}', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            // Update connection status to connected
+            document.getElementById('connection-status').className = 'badge badge-success-pulse';
+            document.getElementById('connection-status').innerHTML = '<i class="fas fa-circle me-1"></i>Connected';
+            
+            // Update stats
             document.getElementById('total-logs').textContent = data.total_logs;
             document.getElementById('total-anomalies').textContent = data.total_anomalies;
             
@@ -304,15 +321,12 @@ function refreshFeed() {
 
 // Load dashboard data on page load and set up auto-refresh (2-second interval for anomaly feed)
 document.addEventListener('DOMContentLoaded', function() {
+    // Initial load - will set connection status based on success/failure
     updateDashboard();
     
     // Auto-refresh anomaly feed every 2 seconds (lightweight, only fetches new data)
     updateInterval = setInterval(updateDashboard, 2000);
     console.log('Anomaly feed auto-refresh enabled: every 2 seconds');
-    
-    // Update connection status
-    document.getElementById('connection-status').className = 'badge badge-success-pulse';
-    document.getElementById('connection-status').innerHTML = '<i class="fas fa-circle me-1"></i>Connected';
 });
 
 // Cleanup on page unload
