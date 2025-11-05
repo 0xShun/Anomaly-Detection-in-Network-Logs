@@ -151,11 +151,11 @@ def api_chart_data(request):
     start_date = end_date - timedelta(days=days)
     
     if chart_type == 'line':
-        # Anomalies over time
-        data = Anomaly.objects.filter(
-            detected_at__range=(start_date, end_date)
+        # Log volume over time (ALL logs)
+        data = LogEntry.objects.filter(
+            timestamp__range=(start_date, end_date)
         ).extra(
-            select={'date': 'date(detected_at)'}
+            select={'date': 'date(timestamp)'}
         ).values('date').annotate(
             count=Count('id')
         ).order_by('date')
@@ -165,7 +165,7 @@ def api_chart_data(request):
             'data': list(data),
             'x_axis': 'date',
             'y_axis': 'count',
-            'title': f'Anomalies Over Time (Last {days} days)'
+            'title': f'Log Volume Over Time (Last {days} days)'
         })
     
     elif chart_type == 'bar':
@@ -186,19 +186,19 @@ def api_chart_data(request):
         })
     
     elif chart_type == 'pie':
-        # Anomaly categories
-        data = Anomaly.objects.filter(
-            detected_at__range=(start_date, end_date)
-        ).values('log_entry__log_type').annotate(
+        # Log Type Distribution (ALL logs, not just anomalies)
+        data = LogEntry.objects.filter(
+            timestamp__range=(start_date, end_date)
+        ).values('log_type').annotate(
             count=Count('id')
-        ).exclude(log_entry__log_type='').order_by('-count')[:10]
+        ).exclude(log_type='').order_by('-count')[:10]
         
         return JsonResponse({
             'type': 'pie',
             'data': list(data),
-            'label': 'log_entry__log_type',
+            'label': 'log_type',
             'value': 'count',
-            'title': f'Anomaly Categories (Last {days} days)'
+            'title': f'Log Type Distribution (Last {days} days)'
         })
     
     return JsonResponse({'error': 'Invalid chart type'}, status=400)

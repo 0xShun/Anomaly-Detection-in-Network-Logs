@@ -389,7 +389,7 @@ function loadChart() {
                 data: {
                     labels: data.data.map(d => d.date || d[data.x_axis]),
                     datasets: [{
-                        label: 'Anomalies Detected',
+                        label: 'Total Logs',
                         data: data.data.map(d => d.count || d[data.y_axis]),
                         borderColor: '#8B1538',
                         backgroundColor: 'rgba(139, 21, 56, 0.1)',
@@ -460,7 +460,7 @@ function loadTypeChart() {
             const ctx = document.getElementById('typeChart').getContext('2d');
             
             // Extract data
-            const labels = data.data.map(d => (d.log_entry__log_type || d[data.label] || 'Unknown').toUpperCase());
+            const labels = data.data.map(d => (d.log_type || d[data.label] || 'Unknown').toUpperCase());
             const values = data.data.map(d => d.count || d[data.value]);
             
             typeChart = new Chart(ctx, {
