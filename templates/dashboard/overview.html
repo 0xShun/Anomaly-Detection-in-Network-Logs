@@ -113,13 +113,13 @@
                     <tbody id="anomaly-feed">
                         {% for anomaly in recent_anomalies %}
                         <tr class="anomaly-row">
-                            <td class="timestamp-cell">{{ anomaly.log_entry.timestamp|date:"n/j/Y, g:i:s A" }}</td>
+                            <td class="timestamp-cell">{{ anomaly.timestamp|date:"n/j/Y, g:i:s A" }}</td>
                             <td>
-                                <span class="host-badge">{{ anomaly.log_entry.host_ip }}</span>
+                                <span class="host-badge">{{ anomaly.host_ip }}</span>
                             </td>
                             <td>
-                                <div class="log-message" title="{{ anomaly.log_entry.log_message }}">
-                                    {{ anomaly.log_entry.log_message }}
+                                <div class="log-message" title="{{ anomaly.log_message }}">
+                                    {{ anomaly.log_message }}
                                 </div>
                             </td>
                             <td>
