@@ -199,27 +199,45 @@ let updateInterval;
 let previousAnomalyCount = 0;
 
 function updateDashboard() {
-    console.log('[Auto-refresh] Fetching anomaly feed...');
-    fetch('{% url "dashboard:anomaly_feed_partial" %}', {
+    console.log('[Auto-refresh] Fetching anomaly feed and stats...');
+    
+    // Fetch anomaly feed HTML
+    const feedPromise = fetch('{% url "dashboard:anomaly_feed_partial" %}', {
         method: 'GET',
         credentials: 'same-origin',
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
         }
-    })
-        .then(response => {
-            console.log('[Auto-refresh] Response status:', response.status);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            return response.text();
-        })
-        .then(html => {
-            console.log('[Auto-refresh] HTML received, updating feed...');
+    }).then(response => {
+        if (!response.ok) throw new Error(`Feed: HTTP ${response.status}`);
+        return response.text();
+    });
+    
+    // Fetch stats JSON
+    const statsPromise = fetch('{% url "dashboard:dashboard_stats" %}', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (!response.ok) throw new Error(`Stats: HTTP ${response.status}`);
+        return response.json();
+    });
+    
+    // Wait for both requests
+    Promise.all([feedPromise, statsPromise])
+        .then(([html, stats]) => {
+            console.log('[Auto-refresh] Data received:', stats.total_logs, 'logs,', stats.total_anomalies, 'anomalies');
             
             // Update connection status to connected
             document.getElementById('connection-status').className = 'badge badge-success-pulse';
             document.getElementById('connection-status').innerHTML = '<i class="fas fa-circle me-1"></i>Connected';
+            
+            // Update stats
+            document.getElementById('total-logs').textContent = stats.total_logs;
+            document.getElementById('total-anomalies').textContent = stats.total_anomalies;
             
             // Get current tbody
             const tbody = document.getElementById('anomaly-feed');

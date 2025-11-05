@@ -99,6 +99,17 @@ def anomaly_feed_partial(request):
 
 
 @login_required
+def dashboard_stats(request):
+    """Return just the stats (total logs, anomalies) as JSON"""
+    stats = get_cached_log_stats()
+    
+    return JsonResponse({
+        'total_logs': stats['total_logs'],
+        'total_anomalies': Anomaly.objects.count(),
+    })
+
+
+@login_required
 def log_details(request):
     """Log details page with optimized search and filtering"""
     # Get user preferences for items per page
