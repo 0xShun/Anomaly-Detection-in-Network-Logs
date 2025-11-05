@@ -14,7 +14,6 @@ from .utils import (
     get_cached_hourly_chart_data, get_optimized_filtered_logs,
     get_cached_log_distributions, get_cached_system_metrics
 )
-from monitoring.utils import get_system_status
 import json
 import threading
 import subprocess

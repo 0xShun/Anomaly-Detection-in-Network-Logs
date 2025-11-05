@@ -2,15 +2,28 @@ import socket
 import subprocess
 import psutil
 from django.conf import settings
-from kafka import KafkaAdminClient, KafkaConsumer
-from kafka.errors import KafkaError
 import logging
+
+# Try to import Kafka (only available in local environment, not on PythonAnywhere)
+try:
+    from kafka import KafkaAdminClient, KafkaConsumer, KafkaProducer
+    from kafka.errors import KafkaError
+    KAFKA_AVAILABLE = True
+except ImportError:
+    KAFKA_AVAILABLE = False
+    KafkaError = Exception  # Fallback for type checking
 
 logger = logging.getLogger(__name__)
 
 
 def check_kafka_status():
     """Check Kafka broker status"""
+    if not KAFKA_AVAILABLE:
+        return {
+            'status': 'not_applicable',
+            'details': 'Kafka not available (PythonAnywhere deployment)'
+        }
+    
     try:
         # Try to connect to Kafka broker
         admin_client = KafkaAdminClient(
@@ -37,6 +50,12 @@ def check_kafka_status():
 
 def check_zookeeper_status():
     """Check Zookeeper status"""
+    if not KAFKA_AVAILABLE:
+        return {
+            'status': 'not_applicable',
+            'details': 'Zookeeper not applicable (PythonAnywhere deployment)'
+        }
+    
     try:
         # Try to connect to Zookeeper on port 2181
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -63,6 +82,12 @@ def check_zookeeper_status():
 
 def check_consumer_status():
     """Check consumer process status"""
+    if not KAFKA_AVAILABLE:
+        return {
+            'status': 'not_applicable',
+            'details': 'Consumer runs on local network (not on PythonAnywhere)'
+        }
+    
     try:
         # Look for Python processes that might be running the consumer
         for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
@@ -121,6 +146,10 @@ def get_system_status():
 
 def get_kafka_consumer():
     """Get Kafka consumer instance"""
+    if not KAFKA_AVAILABLE:
+        logger.warning("Kafka not available (PythonAnywhere deployment)")
+        return None
+    
     try:
         consumer = KafkaConsumer(
             settings.KAFKA_TOPIC_ANOMALIES,
@@ -138,8 +167,11 @@ def get_kafka_consumer():
 
 def get_kafka_producer():
     """Get Kafka producer instance"""
+    if not KAFKA_AVAILABLE:
+        logger.warning("Kafka not available (PythonAnywhere deployment)")
+        return None
+    
     try:
-        from kafka import KafkaProducer
         producer = KafkaProducer(
             bootstrap_servers=[settings.KAFKA_BROKER_URL],
             value_serializer=lambda x: x.encode('utf-8')
