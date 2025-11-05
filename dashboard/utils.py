@@ -16,19 +16,19 @@ def get_cached_log_stats():
         stats = LogEntry.objects.aggregate(
             total_logs=Count('id'),
             error_count=Count(Case(
-                When(log_type='error', then=1),
+                When(log_type__iexact='ERROR', then=1),
                 output_field=IntegerField()
             )),
             warning_count=Count(Case(
-                When(log_type='warning', then=1),
+                When(log_type__iexact='WARNING', then=1),
                 output_field=IntegerField()
             )),
             info_count=Count(Case(
-                When(log_type='info', then=1),
+                When(log_type__iexact='INFO', then=1),
                 output_field=IntegerField()
             )),
             debug_count=Count(Case(
-                When(log_type='debug', then=1),
+                When(log_type__iexact='DEBUG', then=1),
                 output_field=IntegerField()
             ))
         )
