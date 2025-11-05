@@ -556,3 +556,151 @@ def pipeline_status(request):
 def help_page(request):
     """Display the help and user guide page."""
     return render(request, 'dashboard/help.html')
+
+
+@login_required
+def threat_intelligence(request):
+    """Threat Intelligence page - VirusTotal IP lookup"""
+    return render(request, 'dashboard/threat_intelligence.html')
+
+
+@login_required
+def virustotal_lookup(request):
+    """API endpoint for VirusTotal IP lookup"""
+    import requests
+    import re
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        ip_address = data.get('ip_address', '').strip()
+        
+        # Validate IP address format
+        ip_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
+        if not re.match(ip_pattern, ip_address):
+            return JsonResponse({
+                'error': 'Invalid IP address format',
+                'message': 'Please enter a valid IP address (e.g., 192.168.1.1)'
+            }, status=400)
+        
+        # Validate IP octets
+        octets = ip_address.split('.')
+        if not all(0 <= int(octet) <= 255 for octet in octets):
+            return JsonResponse({
+                'error': 'Invalid IP address format',
+                'message': 'Please enter a valid IP address (e.g., 192.168.1.1)'
+            }, status=400)
+        
+        # Get VirusTotal API key from environment
+        vt_api_key = os.environ.get('VIRUSTOTAL_API_KEY')
+        if not vt_api_key:
+            return JsonResponse({
+                'error': 'Configuration error',
+                'message': 'VirusTotal API key not configured'
+            }, status=500)
+        
+        # Query VirusTotal API
+        vt_url = f'https://www.virustotal.com/api/v3/ip_addresses/{ip_address}'
+        headers = {
+            'x-apikey': vt_api_key
+        }
+        
+        response = requests.get(vt_url, headers=headers, timeout=10)
+        
+        if response.status_code == 404:
+            # IP not found in VirusTotal - consider it clean
+            return JsonResponse({
+                'success': True,
+                'clean': True,
+                'ip_address': ip_address,
+                'message': f'IP address {ip_address} is clean (no threat data found)'
+            })
+        
+        if response.status_code == 429:
+            # Rate limit exceeded
+            return JsonResponse({
+                'error': 'Rate limit exceeded',
+                'message': 'VirusTotal API rate limit reached. Please try again in a minute.'
+            }, status=429)
+        
+        if response.status_code != 200:
+            return JsonResponse({
+                'error': 'VirusTotal API error',
+                'message': f'VirusTotal returned status code {response.status_code}'
+            }, status=500)
+        
+        # Parse response
+        vt_data = response.json()
+        data_attrs = vt_data.get('data', {}).get('attributes', {})
+        
+        # Extract last analysis stats
+        last_analysis_stats = data_attrs.get('last_analysis_stats', {})
+        malicious_count = last_analysis_stats.get('malicious', 0)
+        suspicious_count = last_analysis_stats.get('suspicious', 0)
+        harmless_count = last_analysis_stats.get('harmless', 0)
+        undetected_count = last_analysis_stats.get('undetected', 0)
+        
+        # Get reputation/community score
+        reputation = data_attrs.get('reputation', 0)
+        
+        # Get country and ASN info
+        country = data_attrs.get('country', 'Unknown')
+        asn = data_attrs.get('asn', 'Unknown')
+        as_owner = data_attrs.get('as_owner', 'Unknown')
+        
+        # Get last analysis date
+        last_analysis_date = data_attrs.get('last_analysis_date')
+        if last_analysis_date:
+            from datetime import datetime
+            last_analysis_date = datetime.fromtimestamp(last_analysis_date).strftime('%Y-%m-%d %H:%M:%S UTC')
+        else:
+            last_analysis_date = 'Unknown'
+        
+        # Get detection engines that flagged it
+        last_analysis_results = data_attrs.get('last_analysis_results', {})
+        flagged_engines = []
+        for engine, result in last_analysis_results.items():
+            if result.get('category') in ['malicious', 'suspicious']:
+                flagged_engines.append({
+                    'engine': engine,
+                    'category': result.get('category'),
+                    'result': result.get('result', 'malicious')
+                })
+        
+        # Determine if IP is clean
+        is_clean = (malicious_count == 0 and suspicious_count == 0)
+        
+        return JsonResponse({
+            'success': True,
+            'clean': is_clean,
+            'ip_address': ip_address,
+            'malicious_votes': malicious_count,
+            'suspicious_votes': suspicious_count,
+            'harmless_votes': harmless_count,
+            'undetected_votes': undetected_count,
+            'reputation': reputation,
+            'country': country,
+            'asn': asn,
+            'as_owner': as_owner,
+            'last_analysis_date': last_analysis_date,
+            'flagged_engines': flagged_engines[:10],  # Limit to top 10
+            'total_flagged': len(flagged_engines)
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'error': 'Invalid request',
+            'message': 'Invalid JSON data'
+        }, status=400)
+    except requests.RequestException as e:
+        return JsonResponse({
+            'error': 'Network error',
+            'message': f'Failed to connect to VirusTotal: {str(e)}'
+        }, status=500)
+    except Exception as e:
+        return JsonResponse({
+            'error': 'Server error',
+            'message': str(e)
+        }, status=500)

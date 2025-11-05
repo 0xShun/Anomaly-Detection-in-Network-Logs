@@ -30,4 +30,8 @@ urlpatterns = [
     
     # Help page
     path('help/', views.help_page, name='help'),
+    
+    # Threat Intelligence
+    path('threat-intelligence/', views.threat_intelligence, name='threat_intelligence'),
+    path('api/virustotal-lookup/', views.virustotal_lookup, name='virustotal_lookup'),
 ] 

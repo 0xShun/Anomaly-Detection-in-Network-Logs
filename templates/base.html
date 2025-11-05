@@ -178,6 +178,13 @@
                         Analytics
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'threat_intelligence' %}active{% endif %}" 
+                       href="{% url 'dashboard:threat_intelligence' %}">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Threat Intelligence
+                    </a>
+                </li>
                 <!-- System Monitoring - Hidden for demo -->
                 <!--
                 <li class="nav-item">
