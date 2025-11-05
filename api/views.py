@@ -322,20 +322,20 @@ def receive_log(request):
         # Create log entry
         log_entry = LogEntry.objects.create(
             timestamp=timestamp,
-            host=data.get('host', 'unknown'),
+            host_ip=data.get('host', 'unknown'),
             log_type=data.get('log_type', 'INFO'),
             source=data.get('source', 'unknown'),
-            raw_log=data.get('message', ''),
-            anomaly_score=float(data.get('anomaly_score', 0.0))
+            log_message=data.get('message', '')
         )
         
         # Create anomaly record if detected
+        anomaly_score = float(data.get('anomaly_score', 0.0))
         if data.get('is_anomaly', False):
             Anomaly.objects.create(
                 log_entry=log_entry,
-                anomaly_type='model_detected',
-                severity='HIGH' if log_entry.anomaly_score > 0.8 else 'MEDIUM',
-                description=f"Anomalous {data.get('domain', 'unknown')} log detected"
+                anomaly_score=anomaly_score,
+                is_anomaly=True,
+                threshold=0.5
             )
         
         return Response({
