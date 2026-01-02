@@ -58,6 +58,10 @@ def get_cached_recent_anomalies(limit=10):
             'log_message': anomaly.log_entry.log_message[:100] + '...' if len(anomaly.log_entry.log_message) > 100 else anomaly.log_entry.log_message,
             'anomaly_score': anomaly.anomaly_score,
             'detected_at': anomaly.detected_at,
+            'classification_class': anomaly.classification_class,
+            'classification_name': anomaly.classification_name or 'Unknown',
+            'severity': anomaly.severity or 'info',
+            'is_anomaly': anomaly.is_anomaly,
         } for anomaly in anomalies_qs]
         
         # Cache for 1 minute
@@ -244,3 +248,36 @@ def get_cached_system_metrics():
         cache.set(cache_key, metrics, getattr(settings, 'CACHE_TTL', {}).get('system_status', 300))
     
     return metrics
+
+
+def get_cached_classification_stats():
+    """Get classification statistics from Anomaly model"""
+    cache_key = 'classification_stats'
+    stats = cache.get(cache_key)
+    
+    if stats is None:
+        # Class names mapping
+        class_names = {
+            0: 'Normal',
+            1: 'Security Anomaly',
+            2: 'System Failure',
+            3: 'Performance Issue',
+            4: 'Network Anomaly',
+            5: 'Config Error',
+            6: 'Hardware Issue'
+        }
+        
+        # Get counts for each classification class
+        stats = {}
+        for class_num in range(7):
+            count = Anomaly.objects.filter(classification_class=class_num).count()
+            stats[class_num] = {
+                'count': count,
+                'name': class_names.get(class_num, f'Class {class_num}')
+            }
+        
+        # Cache for 2 minutes (frequent updates during demo)
+        cache.set(cache_key, stats, 120)
+    
+    return stats
+

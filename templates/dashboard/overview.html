@@ -45,7 +45,7 @@
         </div>
     </div>
     
-    <div class="col-xl-4 col-md-6">
+    <!-- <div class="col-xl-4 col-md-6">
         <div class="stat-card {% if system_status.overall == 'healthy' or system_status.overall == 'running' %}stat-card-success{% elif system_status.overall == 'degraded' or system_status.overall == 'warning' %}stat-card-warning{% else %}stat-card-danger{% endif %}" data-bs-toggle="tooltip" data-bs-placement="top" title="Overall system health including Kafka, database, and consumer status">
             <div class="stat-card-icon">
                 <i class="fas fa-server"></i>
@@ -76,7 +76,34 @@
             </div>
         </div>
     </div>
+</div> -->
+
+<!-- Classification Statistics Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <h6 class="text-muted mb-3"><i class="fas fa-chart-pie me-2"></i>Classification Breakdown</h6>
+    </div>
+    
+    {% for class_num, class_data in classification_stats.items %}
+    <div class="col-xl-3 col-lg-4 col-md-6">
+        <div class="stat-card stat-card-classification classification-{{ class_num }}">
+            <div class="stat-card-body">
+                <div class="stat-card-header">
+                    <span class="stat-label">{{ class_data.name|upper }}</span>
+                </div>
+                <div class="stat-value">{{ class_data.count|default:"0" }}</div>
+                <div class="stat-footer">
+                    <span class="stat-badge {% if class_num == 0 %}stat-badge-success{% elif class_num == 1 or class_num == 2 or class_num == 6 %}stat-badge-danger{% elif class_num == 4 or class_num == 5 %}stat-badge-warning{% else %}stat-badge-info{% endif %}">
+                        <i class="fas fa-{% if class_num == 0 %}check{% elif class_num == 1 %}shield-alt{% elif class_num == 2 %}times-circle{% elif class_num == 3 %}tachometer-alt{% elif class_num == 4 %}network-wired{% elif class_num == 5 %}cog{% else %}microchip{% endif %} me-1"></i>
+                        Class {{ class_num }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
 </div>
+
 <!-- Real-time Anomaly Feed -->
 <div class="row">
     <div class="col-12">
@@ -107,13 +134,14 @@
                             <th><i class="fas fa-server me-2"></i>Host/IP</th>
                             <th><i class="fas fa-file-alt me-2"></i>Log Message</th>
                             <th><i class="fas fa-chart-line me-2"></i>Anomaly Score</th>
-                            <th><i class="fas fa-flag me-2"></i>Status</th>
+                            <th><i class="fas fa-tag me-2"></i>Classification</th>
+                            <th><i class="fas fa-exclamation-triangle me-2"></i>Severity</th>
                             <th class="text-center"><i class="fas fa-cog me-2"></i>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="anomaly-feed">
                         {% for anomaly in recent_anomalies %}
-                        <tr class="anomaly-row">
+                        <tr class="anomaly-row severity-{{ anomaly.severity|default:'info' }}">
                             <td class="timestamp-cell">{{ anomaly.timestamp|date:"n/j/Y, g:i:s A" }}</td>
                             <td>
                                 <span class="host-badge clickable-ip" onclick="copyToClipboard('{{ anomaly.host_ip }}', event)" title="Click to copy">{{ anomaly.host_ip }}</span>
@@ -129,7 +157,15 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="status-badge status-anomaly">Anomaly</span>
+                                <span class="classification-badge classification-{{ anomaly.classification_class|default:0 }}">
+                                    {{ anomaly.classification_name|default:"Unknown" }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="severity-badge severity-{{ anomaly.severity|default:'info' }}">
+                                    <i class="fas fa-{% if anomaly.severity == 'critical' %}exclamation-circle{% elif anomaly.severity == 'high' %}exclamation-triangle{% elif anomaly.severity == 'medium' %}info-circle{% else %}check-circle{% endif %} me-1"></i>
+                                    {{ anomaly.severity|default:"info"|title }}
+                                </span>
                             </td>
                             <td class="text-center">
                                 <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="viewLogDetails({{ anomaly.log_entry_id }})" title="View Details">
@@ -139,11 +175,11 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="6" class="empty-state">
+                            <td colspan="7" class="empty-state">
                                 <div class="empty-state-content">
                                     <i class="fas fa-inbox"></i>
-                                    <h5>No anomalies detected yet</h5>
-                                    <p class="text-muted mb-0">The system is monitoring for anomalies</p>
+                                    <h5>No logs detected yet</h5>
+                                    <p class="text-muted mb-0">The system is monitoring for logs and anomalies</p>
                                 </div>
                             </td>
                         </tr>

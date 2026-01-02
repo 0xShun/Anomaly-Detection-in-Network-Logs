@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import LogEntry, Anomaly, SystemStatus, PlatformSettings
+from .models import LogEntry, Anomaly, SystemStatus, PlatformSettings, ThreatIntelligenceCache
 
 @admin.register(LogEntry)
 class LogEntryAdmin(admin.ModelAdmin):
@@ -16,3 +16,11 @@ class SystemStatusAdmin(admin.ModelAdmin):
 @admin.register(PlatformSettings)
 class PlatformSettingsAdmin(admin.ModelAdmin):
 	list_display = ('id', 'anomaly_threshold', 'kafka_broker_url', 'updated_at')
+
+@admin.register(ThreatIntelligenceCache)
+class ThreatIntelligenceCacheAdmin(admin.ModelAdmin):
+	list_display = ('ip_address', 'vt_malicious', 'abuseipdb_confidence_score', 'updated_at')
+	search_fields = ('ip_address',)
+	list_filter = ('updated_at', 'vt_queried_at', 'abuseipdb_queried_at', 'shodan_queried_at')
+	readonly_fields = ('created_at', 'updated_at')
+

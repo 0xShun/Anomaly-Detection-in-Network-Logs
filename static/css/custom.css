@@ -1594,3 +1594,163 @@ canvas {
         opacity: 0.6;
     }
 }
+
+/* Classification and Severity Badges */
+.classification-badge {
+    display: inline-block;
+    padding: 0.4rem 0.9rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.3px;
+    border: 1.5px solid;
+}
+
+.classification-0 {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
+    color: #28a745;
+    border-color: rgba(40, 167, 69, 0.3);
+}
+
+.classification-1 {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.15) 0%, rgba(220, 53, 69, 0.1) 100%);
+    color: #dc3545;
+    border-color: rgba(220, 53, 69, 0.4);
+}
+
+.classification-2 {
+    background: linear-gradient(135deg, rgba(139, 0, 0, 0.15) 0%, rgba(139, 0, 0, 0.1) 100%);
+    color: #8b0000;
+    border-color: rgba(139, 0, 0, 0.4);
+}
+
+.classification-3 {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.1) 100%);
+    color: #d39e00;
+    border-color: rgba(255, 193, 7, 0.4);
+}
+
+.classification-4 {
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.15) 0%, rgba(0, 123, 255, 0.1) 100%);
+    color: #007bff;
+    border-color: rgba(0, 123, 255, 0.4);
+}
+
+.classification-5 {
+    background: linear-gradient(135deg, rgba(253, 126, 20, 0.15) 0%, rgba(253, 126, 20, 0.1) 100%);
+    color: #fd7e14;
+    border-color: rgba(253, 126, 20, 0.4);
+}
+
+.classification-6 {
+    background: linear-gradient(135deg, rgba(108, 117, 125, 0.15) 0%, rgba(108, 117, 125, 0.1) 100%);
+    color: #6c757d;
+    border-color: rgba(108, 117, 125, 0.4);
+}
+
+/* Severity Badges */
+.severity-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1.5px solid;
+}
+
+.severity-critical {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.2) 0%, rgba(220, 53, 69, 0.15) 100%);
+    color: #dc3545;
+    border-color: rgba(220, 53, 69, 0.5);
+}
+
+.severity-high {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 152, 0, 0.15) 100%);
+    color: #ff9800;
+    border-color: rgba(255, 152, 0, 0.5);
+}
+
+.severity-medium {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.15) 100%);
+    color: #ffc107;
+    border-color: rgba(255, 193, 7, 0.5);
+}
+
+.severity-info {
+    background: linear-gradient(135deg, rgba(23, 162, 184, 0.15) 0%, rgba(23, 162, 184, 0.1) 100%);
+    color: #17a2b8;
+    border-color: rgba(23, 162, 184, 0.4);
+}
+
+/* Row color coding based on severity */
+.anomaly-row.severity-critical {
+    background: rgba(220, 53, 69, 0.03);
+    border-left: 4px solid #dc3545;
+}
+
+.anomaly-row.severity-high {
+    background: rgba(255, 152, 0, 0.03);
+    border-left: 4px solid #ff9800;
+}
+
+.anomaly-row.severity-medium {
+    background: rgba(255, 193, 7, 0.03);
+    border-left: 4px solid #ffc107;
+}
+
+.anomaly-row.severity-info {
+    background: rgba(23, 162, 184, 0.02);
+    border-left: 4px solid #17a2b8;
+}
+
+/* Classification stats cards styling */
+.stat-card-classification {
+    border-radius: 12px;
+    padding: 1rem;
+    transition: var(--transition-smooth);
+    border-left: 4px solid;
+}
+
+.stat-card-classification.classification-0 {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.08) 0%, rgba(40, 167, 69, 0.04) 100%);
+    border-left-color: #28a745;
+}
+
+.stat-card-classification.classification-1 {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.08) 0%, rgba(220, 53, 69, 0.04) 100%);
+    border-left-color: #dc3545;
+}
+
+.stat-card-classification.classification-2 {
+    background: linear-gradient(135deg, rgba(139, 0, 0, 0.08) 0%, rgba(139, 0, 0, 0.04) 100%);
+    border-left-color: #8b0000;
+}
+
+.stat-card-classification.classification-3 {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 193, 7, 0.04) 100%);
+    border-left-color: #ffc107;
+}
+
+.stat-card-classification.classification-4 {
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.08) 0%, rgba(0, 123, 255, 0.04) 100%);
+    border-left-color: #007bff;
+}
+
+.stat-card-classification.classification-5 {
+    background: linear-gradient(135deg, rgba(253, 126, 20, 0.08) 0%, rgba(253, 126, 20, 0.04) 100%);
+    border-left-color: #fd7e14;
+}
+
+.stat-card-classification.classification-6 {
+    background: linear-gradient(135deg, rgba(108, 117, 125, 0.08) 0%, rgba(108, 117, 125, 0.04) 100%);
+    border-left-color: #6c757d;
+}
+
+.stat-card-classification:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow-hover);
+}
+
