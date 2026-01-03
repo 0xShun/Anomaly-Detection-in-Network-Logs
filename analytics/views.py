@@ -145,31 +145,55 @@ def analytics_dashboard(request):
 def api_chart_data(request):
     """API endpoint for chart data"""
     chart_type = request.GET.get('type', 'line')
-    days = int(request.GET.get('days', 7))
-    
-    end_date = timezone.now()
-    start_date = end_date - timedelta(days=days)
     
     if chart_type == 'line':
-        # Log volume over time (ALL logs)
-        data = LogEntry.objects.filter(
-            timestamp__range=(start_date, end_date)
-        ).extra(
-            select={'date': 'date(timestamp)'}
-        ).values('date').annotate(
+        # Log volume over time grouped by minute, stacked by classification
+        # Get all logs in database (entire time period)
+        from django.db.models.functions import TruncMinute
+        
+        data = LogEntry.objects.exclude(
+            classification_class__isnull=True
+        ).annotate(
+            minute=TruncMinute('timestamp')
+        ).values('minute', 'classification_class').annotate(
             count=Count('id')
-        ).order_by('date')
+        ).order_by('minute', 'classification_class')
+        
+        # Organize data by minute and classification
+        result_data = {}
+        for item in data:
+            minute_str = item['minute'].strftime('%Y-%m-%d %H:%M')
+            class_num = item['classification_class']
+            
+            if minute_str not in result_data:
+                result_data[minute_str] = {
+                    'minute': minute_str,
+                    'class_0': 0,  # Normal
+                    'class_1': 0,  # Security
+                    'class_2': 0,  # System Failure
+                    'class_3': 0,  # Performance
+                    'class_4': 0,  # Network
+                    'class_5': 0,  # Config
+                    'class_6': 0,  # Hardware
+                }
+            
+            result_data[minute_str][f'class_{class_num}'] = item['count']
+        
+        # Convert to list sorted by minute
+        sorted_data = sorted(result_data.values(), key=lambda x: x['minute'])
         
         return JsonResponse({
             'type': 'line',
-            'data': list(data),
-            'x_axis': 'date',
-            'y_axis': 'count',
-            'title': f'Log Volume Over Time (Last {days} days)'
+            'data': sorted_data,
+            'title': 'Log Volume Over Time (By Minute)'
         })
     
     elif chart_type == 'bar':
         # Anomalies by source
+        from datetime import timedelta
+        end_date = timezone.now()
+        start_date = end_date - timedelta(days=7)
+        
         data = LogEntry.objects.filter(
             anomalies__isnull=False,
             timestamp__range=(start_date, end_date)
@@ -182,23 +206,43 @@ def api_chart_data(request):
             'data': list(data),
             'x_axis': 'host_ip',
             'y_axis': 'count',
-            'title': f'Anomalies by Source (Last {days} days)'
+            'title': f'Anomalies by Source (Last 7 days)'
         })
     
     elif chart_type == 'pie':
-        # Log Type Distribution (ALL logs, not just anomalies)
-        data = LogEntry.objects.filter(
-            timestamp__range=(start_date, end_date)
-        ).values('log_type').annotate(
+        # Classification Distribution (ALL logs in database)
+        class_names = {
+            0: 'Normal',
+            1: 'Security Anomaly',
+            2: 'System Failure',
+            3: 'Performance Issue',
+            4: 'Network Anomaly',
+            5: 'Config Error',
+            6: 'Hardware Issue'
+        }
+        
+        data = LogEntry.objects.exclude(
+            classification_class__isnull=True
+        ).values('classification_class').annotate(
             count=Count('id')
-        ).exclude(log_type='').order_by('-count')[:10]
+        ).order_by('classification_class')
+        
+        # Add class names to data
+        result_data = []
+        for item in data:
+            class_num = item['classification_class']
+            result_data.append({
+                'classification_class': class_num,
+                'classification_name': class_names.get(class_num, f'Class {class_num}'),
+                'count': item['count']
+            })
         
         return JsonResponse({
             'type': 'pie',
-            'data': list(data),
-            'label': 'log_type',
+            'data': result_data,
+            'label': 'classification_name',
             'value': 'count',
-            'title': f'Log Type Distribution (Last {days} days)'
+            'title': 'Classification Distribution'
         })
     
     return JsonResponse({'error': 'Invalid chart type'}, status=400)
