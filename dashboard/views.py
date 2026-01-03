@@ -114,6 +114,34 @@ def dashboard_stats(request):
     })
 
 
+@require_POST
+@login_required
+def reset_database(request):
+    """Reset all logs and anomalies for demo purposes"""
+    try:
+        # Delete all anomalies first (due to foreign key constraint)
+        anomaly_count = Anomaly.objects.count()
+        log_count = LogEntry.objects.count()
+        
+        Anomaly.objects.all().delete()
+        LogEntry.objects.all().delete()
+        
+        # Clear cache to force refresh
+        cache.clear()
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Database reset successfully. Deleted {log_count} logs and {anomaly_count} anomalies.',
+            'deleted_logs': log_count,
+            'deleted_anomalies': anomaly_count
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Failed to reset database: {str(e)}'
+        }, status=500)
+
+
 @login_required
 def log_details(request):
     """Log details page with optimized search and filtering"""

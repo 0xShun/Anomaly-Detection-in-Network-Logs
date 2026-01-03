@@ -9,6 +9,7 @@ urlpatterns = [
     path('logs/', views.log_details, name='log_details'),
     path('partials/anomaly-feed/', views.anomaly_feed_partial, name='anomaly_feed_partial'),
     path('partials/stats/', views.dashboard_stats, name='dashboard_stats'),
+    path('reset-database/', views.reset_database, name='reset_database'),
     path('api/dashboard-data/', views.api_dashboard_data, name='api_dashboard_data'),
     path('api/anomaly-feed/', views.api_anomaly_feed, name='api_anomaly_feed'),
     path('api/log/<int:log_id>/', views.api_log_detail, name='api_log_detail'),

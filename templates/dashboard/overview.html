@@ -120,9 +120,9 @@
                         <i class="fas fa-circle me-1"></i>
                         Connected
                     </span>
-                    <button class="btn btn-sm btn-outline-primary" onclick="refreshFeed()">
-                        <i class="fas fa-sync-alt me-1"></i>
-                        Refresh
+                    <button class="btn btn-sm btn-outline-danger" onclick="resetDatabase()" title="Reset all logs and anomalies">
+                        <i class="fas fa-trash-alt me-1"></i>
+                        Reset Database
                     </button>
                 </div>
             </div>
@@ -136,7 +136,7 @@
                             <th><i class="fas fa-chart-line me-2"></i>Anomaly Score</th>
                             <th><i class="fas fa-tag me-2"></i>Classification</th>
                             <th><i class="fas fa-exclamation-triangle me-2"></i>Severity</th>
-                            <th class="text-center"><i class="fas fa-cog me-2"></i>Actions</th>
+                            <th class="text-center"><i class="fas fa-eye me-2"></i>Details</th>
                         </tr>
                     </thead>
                     <tbody id="anomaly-feed">
@@ -443,6 +443,53 @@ function updateDashboard() {
             document.getElementById('connection-status').className = 'badge bg-danger';
             document.getElementById('connection-status').innerHTML = '<i class="fas fa-circle me-1"></i>Disconnected';
         });
+}
+
+function resetDatabase() {
+    // Confirm before resetting
+    if (!confirm('⚠️ Are you sure you want to reset the database?\n\nThis will DELETE ALL logs and anomalies.\n\nThis action cannot be undone!')) {
+        return;
+    }
+    
+    // Show loading state
+    const resetButton = event.target.closest('button');
+    const originalHTML = resetButton.innerHTML;
+    resetButton.disabled = true;
+    resetButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Resetting...';
+    
+    // Get CSRF token
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Call reset endpoint
+    fetch('/dashboard/reset-database/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Show success message
+            alert(`✅ ${data.message}\n\nDeleted ${data.deleted_logs} logs and ${data.deleted_anomalies} anomalies.`);
+            
+            // Refresh the dashboard
+            updateDashboard();
+        } else {
+            // Show error message
+            alert(`❌ Error: ${data.message}`);
+        }
+    })
+    .catch(error => {
+        console.error('Reset error:', error);
+        alert('❌ Failed to reset database. Check console for details.');
+    })
+    .finally(() => {
+        // Restore button state
+        resetButton.disabled = false;
+        resetButton.innerHTML = originalHTML;
+    });
 }
 
 function refreshFeed() {
