@@ -88,6 +88,8 @@ secrets.json
 *.key
 *.pem
 *.crt
+API_KEYS_REFERENCE.md
+WSGI_FILE_FOR_PYTHONANYWHERE.py
 
 # Large model files (should be on local network only)
 *.pth

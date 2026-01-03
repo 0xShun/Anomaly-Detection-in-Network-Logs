@@ -6,7 +6,7 @@ All endpoints require API key authentication.
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.utils import timezone
 
 from .models import Alert, SystemMetric, LogStatistic, RawModelOutput
@@ -281,7 +281,6 @@ def system_status(request):
         }, status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
 @authentication_classes([APIKeyAuthentication])
 @permission_classes([IsAuthenticated])
 @api_view(['POST'])
