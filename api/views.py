@@ -284,66 +284,113 @@ def system_status(request):
 @api_view(['POST'])
 @authentication_classes([APIKeyAuthentication])
 @permission_classes([IsAuthenticated])
+@api_view(['POST'])
 def receive_log(request):
     """
     POST /api/logs/
     
-    Receive log data from local consumer with LogBERT analysis results.
-    Request body:
+    Receive log data from local consumer with Hybrid-BERT classification results.
+    
+    Request body (JSON):
         {
-            "timestamp": "2025-11-06 02:45:15",
-            "host": "192.168.1.10",
-            "log_type": "INFO",
+            "timestamp": "2026-01-04 14:35:00",
+            "host_ip": "192.168.1.100",
+            "log_type": "apache",
             "source": "apache",
-            "message": "GET /index.html HTTP/1.1",
-            "anomaly_score": 0.234,
-            "is_anomaly": false,
-            "domain": "apache"
+            "log_message": "Failed password for admin from 192.168.1.100",
+            "classification_class": 1,
+            "classification_name": "Security Anomaly",
+            "anomaly_score": 0.7696,
+            "severity": "critical",
+            "is_anomaly": true
         }
+    
+    Required fields: log_message, timestamp, classification_class, 
+                     classification_name, anomaly_score, severity, is_anomaly
+    Optional fields: host_ip, source, log_type
+    
+    Note: No authentication required for demo purposes
     """
     from dashboard.models import LogEntry, Anomaly
     from django.utils.dateparse import parse_datetime
+    from datetime import datetime
     
     try:
         data = request.data
         
+        # Validate required fields
+        required_fields = ['log_message', 'timestamp', 'classification_class', 
+                          'classification_name', 'anomaly_score', 'severity', 'is_anomaly']
+        missing_fields = [field for field in required_fields if field not in data]
+        if missing_fields:
+            return Response({
+                'status': 'error',
+                'message': f'Missing required fields: {", ".join(missing_fields)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
         # Parse timestamp
         timestamp_str = data.get('timestamp')
-        if timestamp_str:
-            timestamp = parse_datetime(timestamp_str)
-            if not timestamp:
-                # Try parsing without timezone
-                from datetime import datetime
+        timestamp = parse_datetime(timestamp_str)
+        if not timestamp:
+            # Try alternative formats
+            try:
                 timestamp = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
-        else:
-            from django.utils import timezone
-            timestamp = timezone.now()
+            except ValueError:
+                try:
+                    timestamp = datetime.strptime(timestamp_str, '%Y-%m-%dT%H:%M:%S')
+                except ValueError:
+                    from django.utils import timezone
+                    timestamp = timezone.now()
         
-        # Create log entry
+        # Extract classification data
+        classification_class = int(data.get('classification_class'))
+        classification_name = data.get('classification_name')
+        anomaly_score = float(data.get('anomaly_score', 0.0))
+        severity = data.get('severity', 'info')
+        is_anomaly = data.get('is_anomaly', False)
+        
+        # Create log entry with classification data (always created for all logs)
         log_entry = LogEntry.objects.create(
             timestamp=timestamp,
-            host_ip=data.get('host', 'unknown'),
+            host_ip=data.get('host_ip', 'unknown'),
             log_type=data.get('log_type', 'INFO'),
             source=data.get('source', 'unknown'),
-            log_message=data.get('message', '')
+            log_message=data.get('log_message', ''),
+            classification_class=classification_class,
+            classification_name=classification_name,
+            severity=severity,
+            anomaly_score=anomaly_score
         )
         
-        # Create anomaly record if detected
-        anomaly_score = float(data.get('anomaly_score', 0.0))
-        if data.get('is_anomaly', False):
+        # Create anomaly record ONLY for Security (1) and System Failure (2)
+        # All other classifications (0, 3, 4, 5, 6) are logged but not marked as anomalies
+        if classification_class in [1, 2]:  # Security or System Failure
             Anomaly.objects.create(
                 log_entry=log_entry,
                 anomaly_score=anomaly_score,
-                is_anomaly=True,
+                is_anomaly=is_anomaly,
+                classification_class=classification_class,
+                classification_name=classification_name,
+                severity=severity,
                 threshold=0.5
             )
+            anomaly_created = True
+        else:
+            anomaly_created = False
         
         return Response({
             'status': 'success',
             'log_id': log_entry.id,
+            'classification': classification_name,
+            'anomaly_created': anomaly_created,
             'message': 'Log received and processed'
         }, status=status.HTTP_201_CREATED)
         
+    except ValueError as e:
+        return Response({
+            'status': 'error',
+            'message': f'Invalid data type: {str(e)}'
+        }, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({
             'status': 'error',

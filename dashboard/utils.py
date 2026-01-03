@@ -251,7 +251,7 @@ def get_cached_system_metrics():
 
 
 def get_cached_classification_stats():
-    """Get classification statistics from Anomaly model"""
+    """Get classification statistics from ALL LogEntry records"""
     cache_key = 'classification_stats'
     stats = cache.get(cache_key)
     
@@ -267,10 +267,10 @@ def get_cached_classification_stats():
             6: 'Hardware Issue'
         }
         
-        # Get counts for each classification class
+        # Get counts for each classification class from ALL LogEntry records
         stats = {}
         for class_num in range(7):
-            count = Anomaly.objects.filter(classification_class=class_num).count()
+            count = LogEntry.objects.filter(classification_class=class_num).count()
             stats[class_num] = {
                 'count': count,
                 'name': class_names.get(class_num, f'Class {class_num}')

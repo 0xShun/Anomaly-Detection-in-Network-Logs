@@ -11,6 +11,16 @@ class LogEntry(models.Model):
     log_type = models.CharField(max_length=50, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
+    # Classification fields from Hybrid-BERT model (stored on ALL logs)
+    classification_class = models.IntegerField(null=True, blank=True, db_index=True,
+                                               help_text="Class number (0-6): 0=Normal, 1=Security, 2=System Failure, 3=Performance, 4=Network, 5=Config, 6=Hardware")
+    classification_name = models.CharField(max_length=50, null=True, blank=True, db_index=True,
+                                          help_text="Human-readable class name (e.g., 'Normal', 'Security Anomaly')")
+    severity = models.CharField(max_length=20, null=True, blank=True, db_index=True,
+                               help_text="Severity level: info, medium, high, critical")
+    anomaly_score = models.FloatField(null=True, blank=True, db_index=True,
+                                     help_text="Anomaly score from model (0.0-1.0)")
+    
     class Meta:
         ordering = ['-timestamp']
         verbose_name_plural = 'Log Entries'
@@ -19,6 +29,7 @@ class LogEntry(models.Model):
             models.Index(fields=['host_ip', 'timestamp']),
             models.Index(fields=['source', 'timestamp']),
             models.Index(fields=['log_type', 'timestamp']),
+            models.Index(fields=['classification_class', 'timestamp']),
         ]
     
     def __str__(self):
