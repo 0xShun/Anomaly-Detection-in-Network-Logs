@@ -1,8 +1,8 @@
 {% for anomaly in recent_anomalies %}
-<tr class="anomaly-row">
+<tr class="anomaly-row severity-{{ anomaly.severity|default:'info' }}">
     <td class="timestamp-cell">{{ anomaly.timestamp|date:"n/j/Y, g:i:s A" }}</td>
     <td>
-        <span class="host-badge">{{ anomaly.host_ip }}</span>
+        <span class="host-badge clickable-ip" onclick="copyToClipboard('{{ anomaly.host_ip }}', event)" title="Click to copy">{{ anomaly.host_ip }}</span>
     </td>
     <td>
         <div class="log-message" title="{{ anomaly.log_message }}">
@@ -15,7 +15,15 @@
         </span>
     </td>
     <td>
-        <span class="status-badge status-anomaly">Anomaly</span>
+        <span class="classification-badge classification-{{ anomaly.classification_class|default:0 }}">
+            {{ anomaly.classification_name|default:"Unknown" }}
+        </span>
+    </td>
+    <td>
+        <span class="severity-badge severity-{{ anomaly.severity|default:'info' }}">
+            <i class="fas fa-{% if anomaly.severity == 'critical' %}exclamation-circle{% elif anomaly.severity == 'high' %}exclamation-triangle{% elif anomaly.severity == 'medium' %}info-circle{% else %}check-circle{% endif %} me-1"></i>
+            {{ anomaly.severity|default:"info"|title }}
+        </span>
     </td>
     <td class="text-center">
         <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="viewLogDetails({{ anomaly.log_entry_id }})" title="View Details">
@@ -25,7 +33,7 @@
 </tr>
 {% empty %}
 <tr>
-    <td colspan="6" class="empty-state">
+    <td colspan="7" class="empty-state">
         <div class="empty-state-content">
             <i class="fas fa-inbox"></i>
             <h5>No anomalies detected yet</h5>

@@ -1,1220 +1,137 @@
-{% extends 'base.html' %}{% extends 'base.html' %}
-
-
-
-{% block title %}Threat Intelligence - Log Anomaly Detection Platform{% endblock %}{% block title %}Threat Intelligence - Log Anomaly Detection Platform{% endblock %}
-
-
-
-{% block page_title %}Threat Intelligence{% endblock %}{% block page_title %}Threat Intelligence{% endblock %}
-
-
-
-{% block content %}{% block content %}
-
-<!-- Unified Threat Intelligence Lookup --><!-- Threat Intelligence Lookup -->
-
-<div class="row mb-5"><div class="row mb-5">
-
-    <div class="col-lg-10 mx-auto">    <div class="col-lg-8 mx-auto">
-
-        <div class="content-card">        <div class="content-card">
-
-            <div class="card-header border-0 pb-3">            <div class="card-header border-0 pb-3">
-
-                <h5 class="card-title mb-0">                <h5 class="card-title mb-0">
-
-                    <i class="fas fa-shield-alt card-icon"></i>                    <i class="fas fa-shield-alt card-icon"></i>
-
-                    Unified Threat Intelligence Lookup                    VirusTotal IP Address Lookup
-
-                </h5>                </h5>
-
-                <p class="text-muted mt-2 mb-0">                <p class="text-muted mt-2 mb-0">
-
-                    Check IP addresses against multiple threat intelligence services: VirusTotal, AbuseIPDB, and Shodan                    Check IP addresses against VirusTotal's threat intelligence database
-
-                </p>                </p>
-
-            </div>            </div>
-
-                        
-
-            <div class="card-body">            <div class="card-body">
-
-                <!-- Input Form -->                <!-- Input Form -->
-
-                <form id="ipLookupForm" onsubmit="lookupIP(event)">                <form id="ipLookupForm" onsubmit="lookupIP(event)">
-
-                    <div class="mb-4">                    <div class="mb-4">
-
-                        <label for="ipAddress" class="form-label fw-semibold">                        <label for="ipAddress" class="form-label fw-semibold">
-
-                            IP Address                            IP Address
-
-                        </label>                        </label>
-
-                        <div class="input-group input-group-lg">                        <div class="input-group input-group-lg">
-
-                            <span class="input-group-text bg-light border-end-0">                            <span class="input-group-text bg-light border-end-0">
-
-                                <i class="fas fa-network-wired text-muted"></i>                                <i class="fas fa-network-wired text-muted"></i>
-
-                            </span>                            </span>
-
-                            <input                             <input 
-
-                                type="text"                                 type="text" 
-
-                                class="form-control border-start-0"                                 class="form-control border-start-0" 
-
-                                id="ipAddress"                                 id="ipAddress" 
-
-                                name="ip_address"                                name="ip_address"
-
-                                placeholder="Enter IP address (e.g., 192.168.1.1)"                                 placeholder="Enter IP address (e.g., 192.168.1.1)" 
-
-                                required                                required
-
-                                autocomplete="off">                                autocomplete="off">
-
-                            <button class="btn btn-primary-custom px-5" type="submit" id="lookupButton">                            <button class="btn btn-primary-custom px-4" type="submit" id="lookupButton">
-
-                                <i class="fas fa-search me-2"></i>                                <i class="fas fa-search me-2"></i>
-
-                                Check All Services                                Lookup
-
-                            </button>                            </button>
-
-                        </div>                        </div>
-
-                        <small class="form-text text-muted">                        <small class="form-text text-muted">
-
-                            <i class="fas fa-info-circle me-1"></i>                            Enter an IPv4 address to check its reputation and threat intelligence data
-
-                            This will query VirusTotal, AbuseIPDB, and Shodan simultaneously                        </small>
-
-                        </small>                    </div>
-
-                    </div>                </form>
-
-                </form>                
-
-                                <!-- Loading State -->
-
-                <!-- Loading State -->                <div id="loadingState" style="display: none;">
-
-                <div id="loadingState" style="display: none;">                    <div class="text-center py-4">
-
-                    <div class="text-center py-5">                        <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
-
-                        <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>                        <p class="text-muted">Querying VirusTotal...</p>
-
-                        <h5 class="text-muted">Querying Threat Intelligence Services...</h5>                    </div>
-
-                        <p class="text-muted small">This may take a few seconds</p>                </div>
-
-                    </div>                
-
-                </div>                <!-- Results Container -->
-
-                                <div id="resultsContainer" style="display: none;">
-
-                <!-- Results Container -->                    <!-- Results will be inserted here -->
-
-                <div id="resultsContainer" style="display: none;">                </div>
-
-                    <!-- Results will be inserted here -->            </div>
-
-                </div>        </div>
-
-            </div>    </div>
-
-        </div></div>
-
+{% extends 'base.html' %}
+
+{% block title %}Threat Intelligence{% endblock %}
+
+{% block page_title %}Threat Intelligence{% endblock %}
+
+{% block content %}
+
+<div class="row mb-5">
+    <div class="col-lg-8 mx-auto">
+        <div class="content-card">
+            <div class="card-header border-0 pb-3">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-shield-alt card-icon"></i>
+                    VirusTotal IP Lookup
+                </h5>
+                <p class="text-muted mt-2 mb-0">
+                    Check IP addresses against VirusTotal threat database
+                </p>
+            </div>
+            
+            <div class="card-body">
+                <form id="ipLookupForm" onsubmit="lookupIP(event)">
+                    <div class="mb-4">
+                        <label for="ipAddress" class="form-label fw-bold">IP Address</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="ipAddress" placeholder="e.g., 8.8.8.8" required>
+                            <button class="btn btn-primary px-4" type="submit">
+                                <i class="fas fa-search me-2"></i>Lookup
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div id="loadingSpinner" class="text-center my-5" style="display: none;">
+                    <div class="spinner-border text-primary"></div>
+                    <p class="mt-3 text-muted">Querying...</p>
+                </div>
+
+                <div id="resultsContainer" style="display: none;">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-shield-virus me-2"></i>VirusTotal Results</h6>
+                        <div id="virustotalResults"></div>
+                    </div>
+                </div>
+
+                <div id="errorContainer" class="alert alert-danger" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="errorMessage"></span>
+                </div>
+            </div>
+        </div>
     </div>
-
-</div><!-- Quick Access - Malicious IPs from Recent Anomalies -->
-
-<div class="row">
-
-<!-- Quick Access - Malicious IPs from Recent Anomalies -->    <div class="col-lg-8 mx-auto">
-
-<div class="row">        <div class="content-card">
-
-    <div class="col-lg-10 mx-auto">            <div class="card-header border-0 pb-3">
-
-        <div class="content-card">                <h5 class="card-title mb-0">
-
-            <div class="card-header border-0 pb-3">                    <i class="fas fa-bolt card-icon"></i>
-
-                <h5 class="card-title mb-0">                    Quick Lookup - Recent Anomaly IPs
-
-                    <i class="fas fa-bolt card-icon"></i>                </h5>
-
-                    Quick Lookup - Recent Anomaly IPs            </div>
-
-                </h5>            <div class="card-body">
-
-            </div>                <p class="text-muted mb-3">
-
-            <div class="card-body">                    Click on an IP address from recent anomalies to quickly look it up:
-
-                <p class="text-muted mb-3">                </p>
-
-                    Click on an IP address from recent anomalies to quickly look it up:                <div id="recentIPs" class="d-flex flex-wrap gap-2">
-
-                </p>                    <span class="text-muted">
-
-                <div id="recentIPs" class="d-flex flex-wrap gap-2">                        <i class="fas fa-info-circle me-1"></i>
-
-                    <span class="text-muted">                        Recent anomaly IPs will appear here
-
-                        <i class="fas fa-info-circle me-1"></i>                    </span>
-
-                        Recent anomaly IPs will appear here                </div>
-
-                    </span>            </div>
-
-                </div>        </div>
-
-            </div>    </div>
-
-        </div></div>
-
-    </div>{% endblock %}
-
 </div>
 
-{% endblock %}{% block extra_css %}
-
-<style>
-
-{% block extra_css %}/* Threat Intelligence Specific Styles */
-
-<style>.threat-badge {
-
-/* Threat Intelligence Specific Styles */    display: inline-flex;
-
-.threat-badge {    align-items: center;
-
-    display: inline-flex;    padding: 0.5rem 1rem;
-
-    align-items: center;    border-radius: 8px;
-
-    padding: 0.5rem 1rem;    font-weight: 600;
-
-    border-radius: 8px;    font-size: 0.9rem;
-
-    font-weight: 600;}
-
-    font-size: 0.9rem;
-
-}.threat-badge-clean {
-
-    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-
-.threat-badge-clean {    color: #155724;
-
-    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);    border: 1px solid #c3e6cb;
-
-    color: #155724;}
-
-    border: 1px solid #c3e6cb;
-
-}.threat-badge-malicious {
-
-    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-
-.threat-badge-malicious {    color: #721c24;
-
-    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);    border: 1px solid #f5c6cb;
-
-    color: #721c24;}
-
-    border: 1px solid #f5c6cb;
-
-}.threat-badge-suspicious {
-
-    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-
-.threat-badge-suspicious {    color: #856404;
-
-    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);    border: 1px solid #ffeaa7;
-
-    color: #856404;}
-
-    border: 1px solid #ffeaa7;
-
-}.info-grid {
-
-    display: grid;
-
-.threat-badge-unknown {    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-
-    background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);    gap: 1rem;
-
-    color: #383d41;    margin-top: 1.5rem;
-
-    border: 1px solid #d6d8db;}
-
-}
-
-.info-card {
-
-.service-card {    padding: 1rem;
-
-    background: #ffffff;    background: #f8f9fa;
-
-    border: 1px solid #dee2e6;    border-radius: 8px;
-
-    border-radius: 12px;    border-left: 3px solid #8B1538;
-
-    padding: 1.5rem;}
-
-    margin-bottom: 1.5rem;
-
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);.info-card-label {
-
-}    font-size: 0.75rem;
-
-    text-transform: uppercase;
-
-.service-header {    color: #6c757d;
-
-    display: flex;    font-weight: 600;
-
-    justify-content: space-between;    margin-bottom: 0.25rem;
-
-    align-items: center;}
-
-    margin-bottom: 1.5rem;
-
-    padding-bottom: 1rem;.info-card-value {
-
-    border-bottom: 2px solid #f1f3f5;    font-size: 1.1rem;
-
-}    font-weight: 700;
-
-    color: #212529;
-
-.service-logo {}
-
-    font-size: 1.3rem;
-
-    font-weight: 700;.engine-list {
-
-    color: #8B1538;    max-height: 300px;
-
-}    overflow-y: auto;
-
-}
-
-.info-grid {
-
-    display: grid;.engine-item {
-
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));    padding: 0.75rem;
-
-    gap: 1rem;    background: #ffffff;
-
-    margin-top: 1.5rem;    border: 1px solid #dee2e6;
-
-}    border-radius: 6px;
-
-    margin-bottom: 0.5rem;
-
-.info-card {    display: flex;
-
-    padding: 1rem;    justify-content: space-between;
-
-    background: #f8f9fa;    align-items: center;
-
-    border-radius: 8px;}
-
-    border-left: 3px solid #8B1538;
-
-}.ip-badge {
-
-    display: inline-block;
-
-.info-card-label {    padding: 0.5rem 1rem;
-
-    font-size: 0.75rem;    background: #e9ecef;
-
-    text-transform: uppercase;    border: 1px solid #dee2e6;
-
-    color: #6c757d;    border-radius: 6px;
-
-    font-weight: 600;    cursor: pointer;
-
-    margin-bottom: 0.25rem;    transition: all 0.2s ease;
-
-}    font-family: 'Courier New', monospace;
-
-    font-size: 0.9rem;
-
-.info-card-value {}
-
-    font-size: 1.1rem;
-
-    font-weight: 700;.ip-badge:hover {
-
-    color: #212529;    background: #8B1538;
-
-}    color: white;
-
-    border-color: #8B1538;
-
-.info-card-small {    transform: translateY(-2px);
-
-    font-size: 0.85rem;    box-shadow: 0 2px 8px rgba(139, 21, 56, 0.3);
-
-}}
-
-</style>
-
-.engine-list, .category-list, .port-list, .vuln-list {{% endblock %}
-
-    max-height: 300px;
-
-    overflow-y: auto;{% block extra_js %}
-
-    margin-top: 1rem;<script>
-
-}function getCookie(name) {
-
+<script>
+function getCookie(name) {
     let cookieValue = null;
-
-.list-item {    if (document.cookie && document.cookie !== '') {
-
-    padding: 0.75rem;        const cookies = document.cookie.split(';');
-
-    background: #ffffff;        for (let i = 0; i < cookies.length; i++) {
-
-    border: 1px solid #dee2e6;            const cookie = cookies[i].trim();
-
-    border-radius: 6px;            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-
-    margin-bottom: 0.5rem;                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-
-    display: flex;                break;
-
-    justify-content: space-between;            }
-
-    align-items: center;        }
-
-}    }
-
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
     return cookieValue;
-
-.ip-badge {}
-
-    display: inline-block;
-
-    padding: 0.5rem 1rem;function lookupIP(event) {
-
-    background: #e9ecef;    event.preventDefault();
-
-    border: 1px solid #dee2e6;    
-
-    border-radius: 6px;    const ipAddress = document.getElementById('ipAddress').value.trim();
-
-    cursor: pointer;    const loadingState = document.getElementById('loadingState');
-
-    transition: all 0.2s ease;    const resultsContainer = document.getElementById('resultsContainer');
-
-    font-family: 'Courier New', monospace;    const lookupButton = document.getElementById('lookupButton');
-
-    font-size: 0.9rem;    
-
-}    // Hide previous results
-
-    resultsContainer.style.display = 'none';
-
-.ip-badge:hover {    resultsContainer.innerHTML = '';
-
-    background: #8B1538;    
-
-    color: white;    // Show loading
-
-    border-color: #8B1538;    loadingState.style.display = 'block';
-
-    transform: translateY(-2px);    lookupButton.disabled = true;
-
-    box-shadow: 0 2px 8px rgba(139, 21, 56, 0.3);    
-
-}    // Make API request
-
-    fetch('{% url "dashboard:virustotal_lookup" %}', {
-
-.cache-badge {        method: 'POST',
-
-    display: inline-flex;        headers: {
-
-    align-items: center;            'Content-Type': 'application/json',
-
-    padding: 0.25rem 0.75rem;            'X-CSRFToken': getCookie('csrftoken')
-
-    background: #e3f2fd;        },
-
-    color: #1565c0;        body: JSON.stringify({ ip_address: ipAddress })
-
-    border-radius: 20px;    })
-
-    font-size: 0.75rem;    .then(response => response.json())
-
-    font-weight: 600;    .then(data => {
-
-}        loadingState.style.display = 'none';
-
-        lookupButton.disabled = false;
-
-.service-error {        
-
-    padding: 1rem;        if (data.error) {
-
-    background: #fff3cd;            // Show error alert
-
-    border: 1px solid #ffc107;            resultsContainer.innerHTML = `
-
-    border-radius: 6px;                <div class="alert alert-danger" role="alert">
-
-    color: #856404;                    <h6 class="mb-2">
-
-}                        <i class="fas fa-exclamation-circle me-2"></i>
-
-                        ${data.error}
-
-.no-data {                    </h6>
-
-    padding: 1rem;                    <p class="mb-0">${data.message}</p>
-
-    background: #e2e3e5;                </div>
-
-    border: 1px solid #d6d8db;            `;
-
-    border-radius: 6px;            resultsContainer.style.display = 'block';
-
-    color: #383d41;            return;
-
-    text-align: center;        }
-
-}        
-
-</style>        if (data.clean) {
-
-{% endblock %}            // IP is clean
-
-            resultsContainer.innerHTML = `
-
-{% block extra_js %}                <div class="alert alert-success" role="alert" style="border-left: 4px solid #198754;">
-
-<script>                    <h5 class="mb-2">
-
-function getCookie(name) {                        <i class="fas fa-check-circle me-2"></i>
-
-    let cookieValue = null;                        IP Address is Clean
-
-    if (document.cookie && document.cookie !== '') {                    </h5>
-
-        const cookies = document.cookie.split(';');                    <p class="mb-0">
-
-        for (let i = 0; i < cookies.length; i++) {                        <strong>${data.ip_address}</strong> has no malicious flags in VirusTotal's database.
-
-            const cookie = cookies[i].trim();                    </p>
-
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {                </div>
-
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));            `;
-
-                break;        } else {
-
-            }            // IP has threat data
-
-        }            displayThreatResults(data);
-
-    }        }
-
-    return cookieValue;        
-
-}        resultsContainer.style.display = 'block';
-
+}
+
+function lookupIP(event) {
+    event.preventDefault();
+    const ip = document.getElementById('ipAddress').value.trim();
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('resultsContainer').style.display = 'none';
+    document.getElementById('errorContainer').style.display = 'none';
+    
+    fetch('/dashboard/api/virustotal-lookup/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ ip_address: ip })
     })
-
-function lookupIP(event) {    .catch(error => {
-
-    event.preventDefault();        loadingState.style.display = 'none';
-
-            lookupButton.disabled = false;
-
-    const ipAddress = document.getElementById('ipAddress').value.trim();        
-
-    const loadingState = document.getElementById('loadingState');        resultsContainer.innerHTML = `
-
-    const resultsContainer = document.getElementById('resultsContainer');            <div class="alert alert-danger" role="alert">
-
-    const lookupButton = document.getElementById('lookupButton');                <h6 class="mb-2">
-
-                        <i class="fas fa-exclamation-circle me-2"></i>
-
-    // Hide previous results                    Request Failed
-
-    resultsContainer.style.display = 'none';                </h6>
-
-    resultsContainer.innerHTML = '';                <p class="mb-0">Failed to connect to the server. Please try again.</p>
-
-                </div>
-
-    // Show loading        `;
-
-    loadingState.style.display = 'block';        resultsContainer.style.display = 'block';
-
-    lookupButton.disabled = true;    });
-
-    }
-
-    // Make API request
-
-    fetch('{% url "dashboard:virustotal_lookup" %}', {function displayThreatResults(data) {
-
-        method: 'POST',    const isMalicious = data.malicious_votes > 0;
-
-        headers: {    const isSuspicious = data.suspicious_votes > 0 && !isMalicious;
-
-            'Content-Type': 'application/json',    
-
-            'X-CSRFToken': getCookie('csrftoken')    let badgeClass = 'threat-badge-clean';
-
-        },    let badgeIcon = 'fa-check-circle';
-
-        body: JSON.stringify({ ip_address: ipAddress })    let badgeText = 'Clean';
-
-    })    
-
-    .then(response => response.json())    if (isMalicious) {
-
-    .then(data => {        badgeClass = 'threat-badge-malicious';
-
-        loadingState.style.display = 'none';        badgeIcon = 'fa-exclamation-triangle';
-
-        lookupButton.disabled = false;        badgeText = 'Malicious';
-
-            } else if (isSuspicious) {
-
-        if (data.error) {        badgeClass = 'threat-badge-suspicious';
-
-            // Show error alert        badgeIcon = 'fa-exclamation-circle';
-
-            resultsContainer.innerHTML = `        badgeText = 'Suspicious';
-
-                <div class="alert alert-danger" role="alert">    }
-
-                    <h6 class="mb-2">    
-
-                        <i class="fas fa-exclamation-circle me-2"></i>    let html = `
-
-                        ${data.error}        <div class="mb-4">
-
-                    </h6>            <div class="d-flex justify-content-between align-items-center mb-3">
-
-                    <p class="mb-0">${data.message || 'An error occurred'}</p>                <h5 class="mb-0">
-
-                </div>                    <i class="fas fa-network-wired me-2 text-primary"></i>
-
-            `;                    ${data.ip_address}
-
-            resultsContainer.style.display = 'block';                </h5>
-
-            return;                <span class="threat-badge ${badgeClass}">
-
-        }                    <i class="fas ${badgeIcon} me-2"></i>
-
-                            ${badgeText}
-
-        if (data.success) {                </span>
-
-            displayUnifiedResults(data);            </div>
-
-            resultsContainer.style.display = 'block';            
-
-        }            <div class="info-grid">
-
-    })                <div class="info-card">
-
-    .catch(error => {                    <div class="info-card-label">Malicious Votes</div>
-
-        loadingState.style.display = 'none';                    <div class="info-card-value text-danger">${data.malicious_votes}</div>
-
-        lookupButton.disabled = false;                </div>
-
-                        
-
-        resultsContainer.innerHTML = `                <div class="info-card">
-
-            <div class="alert alert-danger" role="alert">                    <div class="info-card-label">Suspicious Votes</div>
-
-                <h6 class="mb-2">                    <div class="info-card-value text-warning">${data.suspicious_votes}</div>
-
-                    <i class="fas fa-exclamation-circle me-2"></i>                </div>
-
-                    Request Failed                
-
-                </h6>                <div class="info-card">
-
-                <p class="mb-0">Failed to connect to the server. Please try again.</p>                    <div class="info-card-label">Harmless Votes</div>
-
-            </div>                    <div class="info-card-value text-success">${data.harmless_votes}</div>
-
-        `;                </div>
-
-        resultsContainer.style.display = 'block';                
-
-    });                <div class="info-card">
-
-}                    <div class="info-card-label">Undetected</div>
-
-                    <div class="info-card-value text-muted">${data.undetected_votes}</div>
-
-function displayUnifiedResults(data) {                </div>
-
-    let html = '';                
-
-                    <div class="info-card">
-
-    // Header with IP and cache info                    <div class="info-card-label">Community Score</div>
-
-    html += `                    <div class="info-card-value ${data.reputation >= 0 ? 'text-success' : 'text-danger'}">
-
-        <div class="alert alert-info d-flex justify-content-between align-items-center mb-4">                        ${data.reputation}
-
-            <div>                    </div>
-
-                <h5 class="mb-1">                </div>
-
-                    <i class="fas fa-network-wired me-2"></i>                
-
-                    ${data.ip_address}                <div class="info-card">
-
-                </h5>                    <div class="info-card-label">Country</div>
-
-                <small>${data.cached ? `<span class="cache-badge"><i class="fas fa-database me-1"></i> Cached data (${data.cache_age} days old)</span>` : '<span class="badge bg-success">Fresh data</span>'}</small>                    <div class="info-card-value">${data.country}</div>
-
-            </div>                </div>
-
-        </div>                
-
-    `;                <div class="info-card">
-
-                        <div class="info-card-label">ASN</div>
-
-    // VirusTotal Section                    <div class="info-card-value">${data.asn}</div>
-
-    html += displayVirusTotalSection(data.virustotal);                </div>
-
-                    
-
-    // AbuseIPDB Section                <div class="info-card">
-
-    html += displayAbuseIPDBSection(data.abuseipdb);                    <div class="info-card-label">AS Owner</div>
-
-                        <div class="info-card-value" style="font-size: 0.85rem;">${data.as_owner}</div>
-
-    // Shodan Section                </div>
-
-    html += displayShodanSection(data.shodan);                
-
-                    <div class="info-card" style="grid-column: 1 / -1;">
-
-    document.getElementById('resultsContainer').innerHTML = html;                    <div class="info-card-label">Last Analysis</div>
-
-}                    <div class="info-card-value" style="font-size: 0.9rem;">${data.last_analysis_date}</div>
-
-                </div>
-
-function displayVirusTotalSection(vt) {            </div>
-
-    if (vt.error) {        </div>
-
-        return `    `;
-
-            <div class="service-card">    
-
-                <div class="service-header">    // Show flagged detection engines
-
-                    <div class="service-logo">    if (data.flagged_engines && data.flagged_engines.length > 0) {
-
-                        <i class="fas fa-shield-virus me-2"></i>        html += `
-
-                        VirusTotal            <div class="mt-4">
-
-                    </div>                <h6 class="mb-3">
-
-                </div>                    <i class="fas fa-shield-alt me-2 text-danger"></i>
-
-                <div class="service-error">                    Detection Engines (${data.total_flagged} flagged)
-
-                    <i class="fas fa-exclamation-triangle me-2"></i>                </h6>
-
-                    ${vt.message || vt.error}                <div class="engine-list">
-
-                </div>        `;
-
-            </div>        
-
-        `;        data.flagged_engines.forEach(engine => {
-
-    }            const categoryBadge = engine.category === 'malicious' 
-
-                    ? '<span class="badge bg-danger">Malicious</span>'
-
-    if (!vt.success) return '';                : '<span class="badge bg-warning">Suspicious</span>';
-
-                
-
-    const isMalicious = vt.malicious > 0;            html += `
-
-    const isSuspicious = vt.suspicious > 0 && !isMalicious;                <div class="engine-item">
-
-    const isClean = vt.malicious === 0 && vt.suspicious === 0;                    <div>
-
-                            <strong>${engine.engine}</strong>
-
-    let badgeClass = 'threat-badge-clean';                        <br>
-
-    let badgeIcon = 'fa-check-circle';                        <small class="text-muted">${engine.result}</small>
-
-    let badgeText = 'Clean';                    </div>
-
-                        ${categoryBadge}
-
-    if (isMalicious) {                </div>
-
-        badgeClass = 'threat-badge-malicious';            `;
-
-        badgeIcon = 'fa-exclamation-triangle';        });
-
-        badgeText = 'Malicious';        
-
-    } else if (isSuspicious) {        html += `
-
-        badgeClass = 'threat-badge-suspicious';                </div>
-
-        badgeIcon = 'fa-exclamation-circle';            </div>
-
-        badgeText = 'Suspicious';        `;
-
-    }    }
-
-        
-
-    let html = `    document.getElementById('resultsContainer').innerHTML = html;
-
-        <div class="service-card">}
-
-            <div class="service-header">
-
-                <div class="service-logo">function quickLookup(ip) {
-
-                    <i class="fas fa-shield-virus me-2"></i>    document.getElementById('ipAddress').value = ip;
-
-                    VirusTotal    document.getElementById('ipLookupForm').dispatchEvent(new Event('submit'));
-
-                </div>    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-                <span class="threat-badge ${badgeClass}">}
-
-                    <i class="fas ${badgeIcon} me-2"></i>
-
-                    ${badgeText}// Load recent anomaly IPs
-
-                </span>document.addEventListener('DOMContentLoaded', function() {
-
-            </div>    fetch('{% url "dashboard:api_anomaly_feed" %}')
-
-                    .then(response => response.json())
-
-            <div class="info-grid">        .then(data => {
-
-                <div class="info-card">            if (data.anomalies && data.anomalies.length > 0) {
-
-                    <div class="info-card-label">Malicious</div>                const uniqueIPs = [...new Set(data.anomalies.map(a => a.host_ip))].slice(0, 10);
-
-                    <div class="info-card-value text-danger">${vt.malicious || 0}</div>                const container = document.getElementById('recentIPs');
-
-                </div>                
-
-                <div class="info-card">                container.innerHTML = uniqueIPs.map(ip => 
-
-                    <div class="info-card-label">Suspicious</div>                    `<span class="ip-badge" onclick="quickLookup('${ip}')">${ip}</span>`
-
-                    <div class="info-card-value text-warning">${vt.suspicious || 0}</div>                ).join('');
-
-                </div>            }
-
-                <div class="info-card">        })
-
-                    <div class="info-card-label">Harmless</div>        .catch(error => {
-
-                    <div class="info-card-value text-success">${vt.harmless || 0}</div>            console.error('Failed to load recent IPs:', error);
-
-                </div>        });
-
-                <div class="info-card">});
-
-                    <div class="info-card-label">Undetected</div></script>
-
-                    <div class="info-card-value text-muted">${vt.undetected || 0}</div>{% endblock %}
-
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">Reputation</div>
-                    <div class="info-card-value ${vt.reputation >= 0 ? 'text-success' : 'text-danger'}">${vt.reputation || 0}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">Country</div>
-                    <div class="info-card-value info-card-small">${vt.country || 'Unknown'}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">AS Owner</div>
-                    <div class="info-card-value info-card-small">${vt.as_owner || 'Unknown'}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">Last Analysis</div>
-                    <div class="info-card-value info-card-small">${vt.last_analysis_date || 'Unknown'}</div>
-                </div>
-            </div>
-    `;
-    
-    // Show flagged engines if any
-    if (vt.flagged_engines && vt.flagged_engines.length > 0) {
-        html += `
-            <div class="mt-4">
-                <h6 class="mb-3">
-                    <i class="fas fa-shield-alt me-2 text-danger"></i>
-                    Detection Engines (${vt.flagged_engines.length} flagged)
-                </h6>
-                <div class="engine-list">
-        `;
-        
-        vt.flagged_engines.forEach(engine => {
-            const badgeColor = engine.category === 'malicious' ? 'bg-danger' : 'bg-warning';
-            html += `
-                <div class="list-item">
-                    <div>
-                        <strong>${engine.engine}</strong><br>
-                        <small class="text-muted">${engine.result}</small>
-                    </div>
-                    <span class="badge ${badgeColor}">${engine.category}</span>
-                </div>
-            `;
-        });
-        
-        html += `</div></div>`;
-    }
-    
-    html += `</div>`;
-    return html;
-}
-
-function displayAbuseIPDBSection(abuse) {
-    if (abuse.error) {
-        return `
-            <div class="service-card">
-                <div class="service-header">
-                    <div class="service-logo">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        AbuseIPDB
-                    </div>
-                </div>
-                <div class="service-error">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    ${abuse.message || abuse.error}
-                </div>
-            </div>
-        `;
-    }
-    
-    if (!abuse.success) return '';
-    
-    const score = abuse.confidence_score || 0;
-    const isClean = score === 0;
-    const isSuspicious = score > 0 && score <= 50;
-    const isMalicious = score > 50;
-    
-    let badgeClass = 'threat-badge-clean';
-    let badgeIcon = 'fa-check-circle';
-    let badgeText = 'Clean';
-    
-    if (isMalicious) {
-        badgeClass = 'threat-badge-malicious';
-        badgeIcon = 'fa-exclamation-triangle';
-        badgeText = 'High Risk';
-    } else if (isSuspicious) {
-        badgeClass = 'threat-badge-suspicious';
-        badgeIcon = 'fa-exclamation-circle';
-        badgeText = 'Suspicious';
-    }
-    
-    let html = `
-        <div class="service-card">
-            <div class="service-header">
-                <div class="service-logo">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    AbuseIPDB
-                </div>
-                <span class="threat-badge ${badgeClass}">
-                    <i class="fas ${badgeIcon} me-2"></i>
-                    ${badgeText}
-                </span>
-            </div>
-            
-            <div class="info-grid">
-                <div class="info-card">
-                    <div class="info-card-label">Confidence Score</div>
-                    <div class="info-card-value ${score > 50 ? 'text-danger' : (score > 0 ? 'text-warning' : 'text-success')}">${score}%</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">Total Reports</div>
-                    <div class="info-card-value">${abuse.total_reports || 0}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">Reporters</div>
-                    <div class="info-card-value">${abuse.num_distinct_users || 0}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">Country</div>
-                    <div class="info-card-value info-card-small">${abuse.country || 'Unknown'}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">ISP</div>
-                    <div class="info-card-value info-card-small">${abuse.isp || 'Unknown'}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">Usage Type</div>
-                    <div class="info-card-value info-card-small">${abuse.usage_type || 'Unknown'}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">Whitelisted</div>
-                    <div class="info-card-value">${abuse.is_whitelisted ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-secondary">No</span>'}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">Last Reported</div>
-                    <div class="info-card-value info-card-small">${abuse.last_reported_at || 'Never'}</div>
-                </div>
-            </div>
-    `;
-    
-    // Show categories if any
-    if (abuse.categories && abuse.categories.length > 0) {
-        html += `
-            <div class="mt-4">
-                <h6 class="mb-3">
-                    <i class="fas fa-tags me-2 text-danger"></i>
-                    Abuse Categories
-                </h6>
-                <div class="category-list">
-        `;
-        
-        abuse.categories.forEach(cat => {
-            html += `
-                <div class="list-item">
-                    <span><i class="fas fa-tag me-2 text-muted"></i>${cat}</span>
-                </div>
-            `;
-        });
-        
-        html += `</div></div>`;
-    }
-    
-    html += `</div>`;
-    return html;
-}
-
-function displayShodanSection(shodan) {
-    if (shodan.error) {
-        return `
-            <div class="service-card">
-                <div class="service-header">
-                    <div class="service-logo">
-                        <i class="fas fa-search me-2"></i>
-                        Shodan
-                    </div>
-                </div>
-                <div class="service-error">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    ${shodan.message || shodan.error}
-                </div>
-            </div>
-        `;
-    }
-    
-    if (!shodan.success) return '';
-    
-    if (shodan.no_data) {
-        return `
-            <div class="service-card">
-                <div class="service-header">
-                    <div class="service-logo">
-                        <i class="fas fa-search me-2"></i>
-                        Shodan
-                    </div>
-                    <span class="threat-badge threat-badge-unknown">
-                        <i class="fas fa-question-circle me-2"></i>
-                        No Data
-                    </span>
-                </div>
-                <div class="no-data">
-                    <i class="fas fa-info-circle me-2"></i>
-                    No Shodan data available for this IP address
-                </div>
-            </div>
-        `;
-    }
-    
-    const hasVulns = shodan.vulns && shodan.vulns.length > 0;
-    
-    let badgeClass = hasVulns ? 'threat-badge-malicious' : 'threat-badge-clean';
-    let badgeIcon = hasVulns ? 'fa-exclamation-triangle' : 'fa-check-circle';
-    let badgeText = hasVulns ? 'Vulnerabilities Found' : 'No Vulnerabilities';
-    
-    let html = `
-        <div class="service-card">
-            <div class="service-header">
-                <div class="service-logo">
-                    <i class="fas fa-search me-2"></i>
-                    Shodan
-                </div>
-                <span class="threat-badge ${badgeClass}">
-                    <i class="fas ${badgeIcon} me-2"></i>
-                    ${badgeText}
-                </span>
-            </div>
-            
-            <div class="info-grid">
-                <div class="info-card">
-                    <div class="info-card-label">Open Ports</div>
-                    <div class="info-card-value">${shodan.ports ? shodan.ports.length : 0}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">Vulnerabilities</div>
-                    <div class="info-card-value ${hasVulns ? 'text-danger' : 'text-success'}">${shodan.vulns ? shodan.vulns.length : 0}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">Organization</div>
-                    <div class="info-card-value info-card-small">${shodan.organization || 'Unknown'}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">Operating System</div>
-                    <div class="info-card-value info-card-small">${shodan.os || 'Unknown'}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">Country</div>
-                    <div class="info-card-value info-card-small">${shodan.country || 'Unknown'}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">City</div>
-                    <div class="info-card-value info-card-small">${shodan.city || 'Unknown'}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">ISP</div>
-                    <div class="info-card-value info-card-small">${shodan.isp || 'Unknown'}</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-label">Hostnames</div>
-                    <div class="info-card-value">${shodan.hostnames ? shodan.hostnames.length : 0}</div>
-                </div>
-            </div>
-    `;
-    
-    // Show open ports
-    if (shodan.ports && shodan.ports.length > 0) {
-        html += `
-            <div class="mt-4">
-                <h6 class="mb-3">
-                    <i class="fas fa-door-open me-2 text-primary"></i>
-                    Open Ports (${shodan.ports.length})
-                </h6>
-                <div class="d-flex flex-wrap gap-2">
-        `;
-        
-        shodan.ports.forEach(port => {
-            html += `<span class="badge bg-secondary" style="font-size: 0.9rem; padding: 0.5rem 0.75rem;">${port}</span>`;
-        });
-        
-        html += `</div></div>`;
-    }
-    
-    // Show vulnerabilities
-    if (hasVulns) {
-        html += `
-            <div class="mt-4">
-                <h6 class="mb-3">
-                    <i class="fas fa-bug me-2 text-danger"></i>
-                    Vulnerabilities (CVEs)
-                </h6>
-                <div class="vuln-list">
-        `;
-        
-        shodan.vulns.forEach(vuln => {
-            html += `
-                <div class="list-item">
-                    <span><i class="fas fa-exclamation-circle me-2 text-danger"></i><strong>${vuln}</strong></span>
-                    <a href="https://nvd.nist.gov/vuln/detail/${vuln}" target="_blank" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-external-link-alt me-1"></i> Details
-                    </a>
-                </div>
-            `;
-        });
-        
-        html += `</div></div>`;
-    }
-    
-    // Show hostnames
-    if (shodan.hostnames && shodan.hostnames.length > 0) {
-        html += `
-            <div class="mt-4">
-                <h6 class="mb-3">
-                    <i class="fas fa-server me-2 text-info"></i>
-                    Hostnames
-                </h6>
-                <div class="d-flex flex-wrap gap-2">
-        `;
-        
-        shodan.hostnames.forEach(hostname => {
-            html += `<span class="badge bg-info" style="font-size: 0.85rem; padding: 0.4rem 0.6rem;">${hostname}</span>`;
-        });
-        
-        html += `</div></div>`;
-    }
-    
-    html += `</div>`;
-    return html;
-}
-
-function quickLookup(ip) {
-    document.getElementById('ipAddress').value = ip;
-    document.getElementById('ipLookupForm').dispatchEvent(new Event('submit'));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// Load recent anomaly IPs
-document.addEventListener('DOMContentLoaded', function() {
-    fetch('{% url "dashboard:api_anomaly_feed" %}')
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
-            if (data.anomalies && data.anomalies.length > 0) {
-                const uniqueIPs = [...new Set(data.anomalies.map(a => a.host_ip))].slice(0, 10);
-                const container = document.getElementById('recentIPs');
-                
-                container.innerHTML = uniqueIPs.map(ip => 
-                    `<span class="ip-badge" onclick="quickLookup('${ip}')">${ip}</span>`
-                ).join('');
+            document.getElementById('loadingSpinner').style.display = 'none';
+            if (data.error) {
+                document.getElementById('errorContainer').style.display = 'block';
+                document.getElementById('errorMessage').textContent = data.error;
+            } else {
+                document.getElementById('resultsContainer').style.display = 'block';
+                displayResults(data);
             }
         })
-        .catch(error => {
-            console.error('Failed to load recent IPs:', error);
+        .catch(e => {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            document.getElementById('errorContainer').style.display = 'block';
+            document.getElementById('errorMessage').textContent = 'Error fetching data';
         });
-});
+}
+
+function displayResults(data) {
+    if (data.virustotal) {
+        const vt = data.virustotal;
+        document.getElementById('virustotalResults').innerHTML = `
+            <div class="row g-3">
+                <div class="col-md-4 text-center">
+                    <div class="p-3 bg-light rounded">
+                        <div class="fs-3 fw-bold text-danger">${vt.malicious || 0}</div>
+                        <div class="text-muted small">Malicious</div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="p-3 bg-light rounded">
+                        <div class="fs-3 fw-bold text-warning">${vt.suspicious || 0}</div>
+                        <div class="text-muted small">Suspicious</div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="p-3 bg-light rounded">
+                        <div class="fs-3 fw-bold text-success">${vt.harmless || 0}</div>
+                        <div class="text-muted small">Harmless</div>
+                    </div>
+                </div>
+            </div>
+            ${vt.country ? `<div class="mt-3"><strong>Country:</strong> ${vt.country}</div>` : ''}
+            ${vt.as_owner ? `<div class="mt-2"><strong>AS Owner:</strong> ${vt.as_owner}</div>` : ''}
+        `;
+    }
+}
 </script>
+
 {% endblock %}

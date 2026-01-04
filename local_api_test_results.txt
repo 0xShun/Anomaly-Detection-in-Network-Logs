@@ -1,0 +1,179 @@
+
+🚀 Starting local API tests...
+Server: http://localhost:8000
+
+🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪
+LOCAL API INTEGRATION TEST SUITE
+🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪
+Testing server: http://localhost:8000
+Time: 2026-01-04 03:29:06
+
+================================================================================
+AUTHENTICATION
+================================================================================
+✅ Successfully logged in as admin
+
+================================================================================
+TEST 1: Server Connectivity
+================================================================================
+✅ Server is reachable at http://localhost:8000
+   Status code: 200
+
+================================================================================
+TEST 2: API Logs Endpoint - Security Anomaly (Class 1)
+================================================================================
+Endpoint: http://localhost:8000/api/v1/logs/
+Data: {
+  "log_message": "Failed password for admin from 192.168.1.100 port 22 ssh2",
+  "timestamp": "2026-01-04 03:29:06",
+  "host_ip": "192.168.1.100",
+  "source": "linux_test",
+  "log_type": "ERROR",
+  "classification_class": 1,
+  "classification_name": "Security Anomaly",
+  "anomaly_score": 0.9234,
+  "severity": "critical",
+  "is_anomaly": true
+}
+
+Response status: 403
+Response body: {"detail":"Authentication credentials were not provided."}
+❌ Failed to create log: 403
+
+================================================================================
+TEST 3: API Logs Endpoint - System Failure (Class 2)
+================================================================================
+Endpoint: http://localhost:8000/api/v1/logs/
+Data: {
+  "log_message": "Kernel panic - not syncing: Fatal exception",
+  "timestamp": "2026-01-04 03:29:06",
+  "host_ip": "192.168.1.50",
+  "source": "linux_test",
+  "log_type": "ERROR",
+  "classification_class": 2,
+  "classification_name": "System Failure",
+  "anomaly_score": 0.8765,
+  "severity": "critical",
+  "is_anomaly": true
+}
+
+Response status: 403
+❌ Failed: 403
+
+================================================================================
+TEST 4: API Logs Endpoint - Normal Log (Class 0)
+================================================================================
+Endpoint: http://localhost:8000/api/v1/logs/
+Data: {
+  "log_message": "GET /index.html HTTP/1.1 200 1234",
+  "timestamp": "2026-01-04 03:29:06",
+  "host_ip": "192.168.1.75",
+  "source": "apache_test",
+  "log_type": "INFO",
+  "classification_class": 0,
+  "classification_name": "Normal",
+  "anomaly_score": 0.0234,
+  "severity": "info",
+  "is_anomaly": false
+}
+
+Response status: 403
+❌ Failed: 403
+
+================================================================================
+TEST 5: API Logs Endpoint - Performance Issue (Class 3, No Anomaly)
+================================================================================
+Endpoint: http://localhost:8000/api/v1/logs/
+Data: {
+  "log_message": "High CPU usage detected: 95%",
+  "timestamp": "2026-01-04 03:29:06",
+  "host_ip": "192.168.1.80",
+  "source": "monitoring_test",
+  "log_type": "WARNING",
+  "classification_class": 3,
+  "classification_name": "Performance Issue",
+  "anomaly_score": 0.6543,
+  "severity": "medium",
+  "is_anomaly": false
+}
+
+Response status: 403
+❌ Failed: 403
+
+================================================================================
+TEST 6: Dashboard Data Visibility
+================================================================================
+⚠️  No logs created yet, skipping
+
+================================================================================
+TEST 7: Analytics Chart Data API
+================================================================================
+
+📊 Testing Line Chart API...
+✅ Line chart API accessible
+   Chart type: line
+   Chart title: Log Volume Over Time (By Minute)
+   Data points: 0
+   ℹ️  No data points (database might be empty)
+
+🥧 Testing Pie Chart API...
+✅ Pie chart API accessible
+   Chart type: pie
+   Chart title: Classification Distribution
+   Classifications: 0
+   ℹ️  No data (database might be empty)
+
+📊 Analytics API: 2/2 endpoints working
+
+================================================================================
+TEST 8: Analytics Page Visibility
+================================================================================
+✅ Analytics page accessible
+
+   Chart elements:
+   ✅ Volume Chart Canvas
+   ✅ Type Chart Canvas
+   ✅ Chart.js Library
+   ✅ Refresh Charts Button
+   ✅ Log Volume Title
+   ✅ Classification Distribution
+
+================================================================================
+TEST 9: API Error Handling
+================================================================================
+Testing with missing required fields...
+Response status: 403
+⚠️  Expected 400, got 403
+
+================================================================================
+TEST 10: End-to-End Data Flow
+================================================================================
+Creating test log with unique identifier...
+
+1️⃣  Sending log via API...
+❌ Failed to create log: 403
+
+================================================================================
+TEST SUMMARY
+================================================================================
+✅ PASS - Connectivity
+❌ FAIL - Api Security
+❌ FAIL - Api System Failure
+❌ FAIL - Api Normal
+❌ FAIL - Api Performance
+✅ PASS - Dashboard Visibility
+✅ PASS - Analytics Api
+✅ PASS - Analytics Page
+❌ FAIL - Error Handling
+❌ FAIL - End To End
+
+Results: 4/10 tests passed
+
+⚠️  6 test(s) failed. Please review the errors above.
+🚀 Starting Django server...
+⏳ Waiting for server to start...
+🧪 Running tests...
+
+
+🛑 Stopping server...
+✅ Server stopped
