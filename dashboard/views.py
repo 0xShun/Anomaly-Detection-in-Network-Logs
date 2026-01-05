@@ -659,7 +659,7 @@ def virustotal_lookup(request):
         }, status=500)
 
 
-@api_view(['GET'])
+@login_required
 def threat_map_data(request):
     """
     API endpoint to get geographic data for Security Anomalies from last 24 hours.
