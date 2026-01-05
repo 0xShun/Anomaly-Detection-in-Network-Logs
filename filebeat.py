@@ -309,26 +309,75 @@ def send_log(log_data, log_number, total_logs):
         response = requests.post(API_URL, json=log_data, headers=headers, timeout=5)
         
         if response.status_code == 201:
-            # Show progress
-            class_name = log_data['classification_name']
-            severity = log_data['severity']
-            print(f"[{log_number}/{total_logs}] ✓ {class_name} ({severity})")
+            # Print the actual log message being sent (simulate VM output)
+            log_msg = log_data['log_message']
+            timestamp = log_data['timestamp'].split('T')[1].split('.')[0]  # Extract time only
+            print(f"[  {timestamp}  ] {log_msg}")
             return True
         else:
-            print(f"[{log_number}/{total_logs}] ✗ Failed: {response.status_code}")
+            print(f"[  ERROR  ] Failed to send log: HTTP {response.status_code}")
             return False
             
     except Exception as e:
-        print(f"[{log_number}/{total_logs}] ✗ Error: {e}")
+        print(f"[  ERROR  ] {e}")
         return False
 
 def main():
     """Main function to generate and send 400 logs"""
+    
+    # QEMU/Linux boot header
+    print("\n" + "=" * 80)
+    print("QEMU Virtual Machine Monitor")
     print("=" * 80)
-    print("DEMO LOG GENERATOR - LogBERT Classified Logs")
+    print(f"Starting QEMU system x86_64 v7.2.0")
+    print(f"Network backend: user mode")
+    print(f"Log forwarding: {API_URL}")
     print("=" * 80)
-    print(f"Target: {API_URL}")
-    print(f"Total logs to send: 400")
+    print()
+    
+    # Linux boot messages
+    print("[    0.000000] Linux version 6.1.0-logbert (root@logbert-vm)")
+    print("[    0.000000] Command line: BOOT_IMAGE=/boot/vmlinuz root=/dev/sda1")
+    print("[    0.000000] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point'")
+    print("[    0.001234] Memory: 4096MB available")
+    print("[    0.002456] CPU: Intel(64) Family 6 Model 142 Stepping 12")
+    print("[    0.005678] smpboot: Allowing 4 CPUs, 0 hotplug CPUs")
+    print("[    0.012345] Setting up swiotlb for DMA bounce buffers")
+    print("[    0.023456] PCI: Using configuration type 1 for base access")
+    print("[    0.034567] workingset: timestamp_bits=14 max_order=18")
+    print("[    0.045678] Block layer SCSI generic (bsg) driver version 0.4")
+    print("[    0.056789] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled")
+    print("[    0.067890] Non-volatile memory driver v1.3")
+    print("[    0.078901] Linux agpgart interface v0.103")
+    print("[    0.089012] ACPI: bus type USB registered")
+    print("[    0.100123] usbcore: registered new interface driver usbfs")
+    print("[    0.111234] SCSI subsystem initialized")
+    print("[    0.122345] Initializing random number generator")
+    print("[    0.133456] alg: No test for lzo-rle (lzo-rle-generic)")
+    print("[    0.144567] NET: Registered PF_INET protocol family")
+    print("[    0.155678] TCP established hash table entries: 32768")
+    print("[    0.166789] TCP bind hash table entries: 32768")
+    print("[    0.177890] Initializing cgroup subsys cpuset")
+    print("[    0.188901] Initializing cgroup subsys cpu")
+    print("[    0.199012] Initializing cgroup subsys cpuacct")
+    print("[    0.210123] EXT4-fs (sda1): mounted filesystem with ordered data mode")
+    print("[    0.221234] VFS: Mounted root (ext4 filesystem) readonly")
+    print("[    0.232345] devtmpfs: mounted")
+    print("[    0.243456] Freeing unused kernel memory: 1024K")
+    print("[    0.254567] systemd[1]: systemd 252 running in system mode")
+    print("[    0.265678] systemd[1]: Detected virtualization qemu")
+    print("[    0.276789] systemd[1]: Detected architecture x86-64")
+    print("[    0.287890] systemd[1]: Set hostname to <logbert-vm>")
+    print("[    0.298901] systemd[1]: Reached target Basic System")
+    print("[    0.309012] systemd[1]: Starting Network Service...")
+    print("[    0.320123] systemd[1]: Starting OpenSSH server daemon...")
+    print("[    0.331234] systemd[1]: Starting System Logging Service...")
+    print("[    0.342345] systemd[1]: Started rsyslog.service")
+    print("[    0.353456] rsyslogd: [origin software=\"rsyslogd\" version=\"8.2302.0\"]")
+    print()
+    print("[    0.365000] LogBERT Monitoring Agent v2.1.0 initialized")
+    print("[    0.365500] Connecting to central log collection endpoint...")
+    print("[    0.366000] Connection established. Beginning log stream...")
     print()
     
     # Distribution of log types (totals to 400)
@@ -341,16 +390,6 @@ def main():
         5: 12,   # 3% Configuration Issue
         6: 8     # 2% Data Anomaly
     }
-    
-    print("Distribution:")
-    class_names = {
-        0: "Normal", 1: "Security Anomaly", 2: "System Failure",
-        3: "Performance Issue", 4: "Network Anomaly",
-        5: "Configuration Issue", 6: "Data Anomaly"
-    }
-    for class_id, count in distribution.items():
-        print(f"  Class {class_id} ({class_names[class_id]}): {count} logs")
-    print()
     
     # Generate all logs first
     all_logs = []
@@ -372,9 +411,6 @@ def main():
     # Sort by timestamp for realistic chronological order
     all_logs.sort(key=lambda x: x['timestamp'])
     
-    print("Sending logs...")
-    print("-" * 80)
-    
     success_count = 0
     start = time.time()
     
@@ -382,31 +418,34 @@ def main():
         if send_log(log, i, len(all_logs)):
             success_count += 1
         
-        # Small delay to avoid overwhelming the server
+        # Small delay to simulate real-time log generation
         time.sleep(0.05)  # 50ms delay between requests
     
     elapsed = time.time() - start
     
-    print("-" * 80)
+    print()
+    print("[    {:.6f}] Log stream completed".format(elapsed + 0.366))
+    print("[    {:.6f}] Connection closed gracefully".format(elapsed + 0.367))
     print()
     print("=" * 80)
-    print("SUMMARY")
+    print("SYSTEM STATUS")
     print("=" * 80)
-    print(f"Total logs sent: {len(all_logs)}")
+    print(f"Total logs transmitted: {len(all_logs)}")
     print(f"Successful: {success_count}")
     print(f"Failed: {len(all_logs) - success_count}")
-    print(f"Time elapsed: {elapsed:.2f} seconds")
-    print(f"Rate: {len(all_logs)/elapsed:.2f} logs/second")
+    print(f"Runtime: {elapsed:.2f} seconds")
+    print(f"Transmission rate: {len(all_logs)/elapsed:.2f} logs/second")
     print()
-    print("✓ Demo data loaded! Check your dashboard at http://localhost:8000/dashboard/")
+    print("✓ System monitoring active. Dashboard: https://logbert.pythonanywhere.com/dashboard/")
     print("=" * 80)
 
 if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\n⚠ Interrupted by user")
+        print("\n\n[  SIGINT  ] Interrupt signal received")
+        print("[  SHUTDOWN  ] Stopping log transmission...")
         sys.exit(1)
     except Exception as e:
-        print(f"\n\n✗ Error: {e}")
+        print(f"\n\n[  CRITICAL  ] System error: {e}")
         sys.exit(1)
