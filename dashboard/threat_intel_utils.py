@@ -459,6 +459,10 @@ def unified_threat_lookup(ip_address):
         cache_obj.abuseipdb_is_whitelisted = abuseipdb_result.get('is_whitelisted', False)
         cache_obj.abuseipdb_last_reported_at = abuseipdb_result.get('last_reported_at', '')
         cache_obj.abuseipdb_queried_at = timezone.now()
+    else:
+        # Set default value for is_whitelisted if AbuseIPDB lookup failed
+        if cache_obj.abuseipdb_is_whitelisted is None:
+            cache_obj.abuseipdb_is_whitelisted = False
     
     # Store Shodan data
     if shodan_result.get('success') and not shodan_result.get('no_data'):
