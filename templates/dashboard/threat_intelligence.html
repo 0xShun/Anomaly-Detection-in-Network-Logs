@@ -4,6 +4,35 @@
 
 {% block page_title %}Threat Intelligence{% endblock %}
 
+{% block extra_css %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+<style>
+#threatMap {
+    height: 500px;
+    width: 100%;
+    border-radius: 8px;
+}
+.leaflet-popup-content {
+    font-size: 14px;
+}
+.threat-marker-high {
+    background-color: #dc3545;
+    border: 2px solid #fff;
+}
+.threat-marker-medium {
+    background-color: #ffc107;
+    border: 2px solid #fff;
+}
+.threat-marker-low {
+    background-color: #28a745;
+    border: 2px solid #fff;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 
 <!-- IP Lookup Section -->
@@ -103,32 +132,16 @@
                     <p class="mt-3 text-muted">Loading threat map...</p>
                 </div>
 
-                <div id="threatMapContainer">
-                    <!-- Map will be rendered here -->
-                    <div id="worldMap" class="position-relative" style="width: 100%; height: 500px; background: linear-gradient(to bottom, #e3f2fd 0%, #bbdefb 100%); border-radius: 8px; overflow: hidden;">
-                        <svg width="100%" height="100%" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet">
-                            <!-- Simplified world map outlines -->
-                            <g id="mapOutlines" fill="#90caf9" stroke="#1976d2" stroke-width="1">
-                                <!-- Continents as simplified paths -->
-                                <path id="northAmerica" d="M 150,100 L 200,80 L 280,90 L 300,120 L 280,200 L 200,220 L 150,200 Z"/>
-                                <path id="southAmerica" d="M 250,280 L 280,260 L 290,320 L 260,380 L 240,350 Z"/>
-                                <path id="europe" d="M 480,120 L 520,100 L 560,110 L 550,160 L 490,150 Z"/>
-                                <path id="africa" d="M 480,200 L 540,190 L 560,250 L 550,320 L 500,340 L 470,280 Z"/>
-                                <path id="asia" d="M 580,80 L 750,90 L 800,130 L 780,200 L 700,180 L 650,150 L 600,120 Z"/>
-                                <path id="australia" d="M 780,320 L 850,310 L 870,350 L 840,370 L 790,360 Z"/>
-                            </g>
-                            <!-- Threat markers will be added dynamically -->
-                            <g id="threatMarkers"></g>
-                        </svg>
-                    </div>
+                <!-- Leaflet Map Container -->
+                <div id="threatMap"></div>
 
-                    <!-- Map Legend -->
-                    <div class="mt-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>Legend:</h6>
-                                <div class="d-flex align-items-center mb-2">
-                                    <span class="badge bg-danger me-2" style="width: 20px; height: 20px; border-radius: 50%;"></span>
+                <!-- Map Legend and Statistics -->
+                <div class="mt-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Legend:</h6>
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-danger me-2" style="width: 20px; height: 20px; border-radius: 50%;"></span>
                                     <span>High Threat (Score > 70)</span>
                                 </div>
                                 <div class="d-flex align-items-center mb-2">
@@ -159,28 +172,36 @@
     </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha512-GZj2kLLZ4lL9p5UbhG7mwKpF+VZmNB5qE5xKTCVVfDIiYzO8bK5xmHXe3S7CfSqDo9h3pxmJWwVR0Kl/CqcFJw=="
+     crossorigin=""></script>
+
 <script>
-// Country code to coordinates mapping (approximate center points)
+// Global map variable
+let threatMap;
+let markerGroup;
+
+// Country coordinates for approximate center points (lat, lon)
 const countryCoordinates = {
-    'US': {x: 200, y: 150}, 'CN': {x: 750, y: 140}, 'RU': {x: 680, y: 110},
-    'BR': {x: 270, y: 310}, 'IN': {x: 680, y: 200}, 'DE': {x: 500, y: 130},
-    'GB': {x: 470, y: 120}, 'FR': {x: 490, y: 135}, 'JP': {x: 820, y: 160},
-    'AU': {x: 820, y: 340}, 'CA': {x: 180, y: 100}, 'MX': {x: 200, y: 200},
-    'KR': {x: 800, y: 165}, 'IT': {x: 510, y: 145}, 'ES': {x: 460, y: 150},
-    'NL': {x: 495, y: 125}, 'SE': {x: 515, y: 100}, 'PL': {x: 520, y: 125},
-    'TR': {x: 560, y: 155}, 'ID': {x: 750, y: 260}, 'TH': {x: 730, y: 210},
-    'VN': {x: 750, y: 210}, 'PH': {x: 790, y: 220}, 'MY': {x: 740, y: 240},
-    'SG': {x: 740, y: 250}, 'ZA': {x: 530, y: 340}, 'EG': {x: 550, y: 190},
-    'NG': {x: 490, y: 240}, 'KE': {x: 570, y: 270}, 'AR': {x: 260, y: 350},
-    'CL': {x: 245, y: 360}, 'CO': {x: 250, y: 250}, 'PE': {x: 250, y: 290},
-    'VE': {x: 265, y: 240}, 'UA': {x: 550, y: 130}, 'RO': {x: 540, y: 140},
-    'CZ': {x: 515, y: 130}, 'BE': {x: 490, y: 130}, 'PT': {x: 455, y: 155},
-    'GR': {x: 530, y: 155}, 'HU': {x: 525, y: 138}, 'AT': {x: 515, y: 137},
-    'CH': {x: 498, y: 137}, 'NO': {x: 505, y: 95}, 'DK': {x: 505, y: 115},
-    'FI': {x: 540, y: 95}, 'IE': {x: 460, y: 120}, 'NZ': {x: 900, y: 380},
-    'IL': {x: 565, y: 175}, 'SA': {x: 590, y: 200}, 'AE': {x: 610, y: 200},
-    'PK': {x: 660, y: 185}, 'BD': {x: 710, y: 205}, 'IR': {x: 610, y: 170},
-    'IQ': {x: 580, y: 175}, 'HK': {x: 760, y: 205}, 'TW': {x: 790, y: 205},
+    'US': [37.0902, -95.7129], 'CN': [35.8617, 104.1954], 'RU': [61.5240, 105.3188],
+    'BR': [-14.2350, -51.9253], 'IN': [20.5937, 78.9629], 'DE': [51.1657, 10.4515],
+    'GB': [55.3781, -3.4360], 'FR': [46.2276, 2.2137], 'JP': [36.2048, 138.2529],
+    'AU': [-25.2744, 133.7751], 'CA': [56.1304, -106.3468], 'MX': [23.6345, -102.5528],
+    'KR': [35.9078, 127.7669], 'IT': [41.8719, 12.5674], 'ES': [40.4637, -3.7492],
+    'NL': [52.1326, 5.2913], 'SE': [60.1282, 18.6435], 'PL': [51.9194, 19.1451],
+    'TR': [38.9637, 35.2433], 'ID': [-0.7893, 113.9213], 'TH': [15.8700, 100.9925],
+    'VN': [14.0583, 108.2772], 'PH': [12.8797, 121.7740], 'MY': [4.2105, 101.9758],
+    'SG': [1.3521, 103.8198], 'ZA': [-30.5595, 22.9375], 'EG': [26.8206, 30.8025],
+    'NG': [9.0820, 8.6753], 'KE': [-0.0236, 37.9062], 'AR': [-38.4161, -63.6167],
+    'CL': [-35.6751, -71.5430], 'CO': [4.5709, -74.2973], 'PE': [-9.1900, -75.0152],
+    'VE': [6.4238, -66.5897], 'UA': [48.3794, 31.1656], 'RO': [45.9432, 24.9668],
+    'CZ': [49.8175, 15.4730], 'BE': [50.5039, 4.4699], 'PT': [39.3999, -8.2245],
+    'GR': [39.0742, 21.8243], 'HU': [47.1625, 19.5033], 'AT': [47.5162, 14.5501],
+    'CH': [46.8182, 8.2275], 'NO': [60.4720, 8.4689], 'DK': [56.2639, 9.5018],
+    'FI': [61.9241, 25.7482], 'IE': [53.4129, -8.2439], 'NZ': [-40.9006, 174.8860],
+    'IL': [31.0461, 34.8516], 'SA': [23.8859, 45.0792], 'AE': [23.4241, 53.8478],
+    'PK': [30.3753, 69.3451], 'BD': [23.6850, 90.3563], 'IR': [32.4279, 53.6880],
+    'IQ': [33.2232, 43.6793], 'HK': [22.3193, 114.1694], 'TW': [23.6978, 120.9605],
 };
 
 function getCookie(name) {
@@ -196,6 +217,29 @@ function getCookie(name) {
         }
     }
     return cookieValue;
+}
+
+// Initialize Leaflet map
+function initThreatMap() {
+    if (threatMap) {
+        threatMap.remove(); // Remove existing map if any
+    }
+    
+    // Create map centered on world view
+    threatMap = L.map('threatMap').setView([20, 0], 2);
+    
+    // Add tile layer (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 18,
+        minZoom: 2
+    }).addTo(threatMap);
+    
+    // Initialize marker group
+    markerGroup = L.layerGroup().addTo(threatMap);
+    
+    // Load initial data
+    loadThreatMap();
 }
 
 function lookupIP(event) {
@@ -344,13 +388,11 @@ function displayResults(data) {
 // Load threat map data
 function loadThreatMap() {
     document.getElementById('mapLoadingSpinner').style.display = 'block';
-    document.getElementById('threatMapContainer').style.opacity = '0.5';
     
     fetch('/dashboard/api/threat-map-data/')
         .then(r => r.json())
         .then(data => {
             document.getElementById('mapLoadingSpinner').style.display = 'none';
-            document.getElementById('threatMapContainer').style.opacity = '1';
             
             if (data.success) {
                 displayThreatMap(data);
@@ -358,49 +400,59 @@ function loadThreatMap() {
         })
         .catch(e => {
             document.getElementById('mapLoadingSpinner').style.display = 'none';
-            document.getElementById('threatMapContainer').style.opacity = '1';
             console.error('Error loading threat map:', e);
         });
 }
 
 function displayThreatMap(data) {
-    const markersGroup = document.getElementById('threatMarkers');
-    markersGroup.innerHTML = ''; // Clear existing markers
+    // Clear existing markers
+    markerGroup.clearLayers();
     
     // Add markers for each IP location
     data.ip_locations.forEach(location => {
         const coords = countryCoordinates[location.country_code];
         if (!coords) return;
         
-        // Determine marker color based on threat level
+        // Determine marker color and size based on threat level
         let color = '#28a745'; // green (safe)
+        let className = 'threat-marker-low';
         const totalScore = (location.malicious_count * 10) + location.abuse_score;
+        
         if (totalScore > 70) {
             color = '#dc3545'; // red (malicious)
+            className = 'threat-marker-high';
         } else if (totalScore > 30) {
             color = '#ffc107'; // yellow (suspicious)
+            className = 'threat-marker-medium';
         }
         
         // Add some random offset to avoid overlapping markers from same country
-        const offsetX = (Math.random() - 0.5) * 30;
-        const offsetY = (Math.random() - 0.5) * 30;
+        const offsetLat = (Math.random() - 0.5) * 2;
+        const offsetLon = (Math.random() - 0.5) * 2;
         
-        // Create marker
-        const marker = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        marker.setAttribute('cx', coords.x + offsetX);
-        marker.setAttribute('cy', coords.y + offsetY);
-        marker.setAttribute('r', '6');
-        marker.setAttribute('fill', color);
-        marker.setAttribute('stroke', '#fff');
-        marker.setAttribute('stroke-width', '2');
-        marker.setAttribute('opacity', '0.8');
+        // Create custom marker
+        const marker = L.circleMarker([coords[0] + offsetLat, coords[1] + offsetLon], {
+            radius: 8,
+            fillColor: color,
+            color: '#fff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.8,
+            className: className
+        });
         
-        // Add tooltip
-        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-        title.textContent = `${location.country_flag} ${location.ip} (${location.country_code})`;
-        marker.appendChild(title);
+        // Create popup content
+        const popupContent = `
+            <div style="min-width: 200px;">
+                <h6>${location.country_flag} ${location.ip}</h6>
+                <p class="mb-1"><strong>Country:</strong> ${location.country_code}</p>
+                <p class="mb-1"><strong>Malicious Count:</strong> ${location.malicious_count}</p>
+                <p class="mb-0"><strong>Abuse Score:</strong> ${location.abuse_score}</p>
+            </div>
+        `;
         
-        markersGroup.appendChild(marker);
+        marker.bindPopup(popupContent);
+        marker.addTo(markerGroup);
     });
     
     // Update statistics
@@ -426,7 +478,7 @@ function displayThreatMap(data) {
 
 // Load threat map on page load
 document.addEventListener('DOMContentLoaded', function() {
-    loadThreatMap();
+    initThreatMap();
 });
 </script>
 
