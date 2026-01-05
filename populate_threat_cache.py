@@ -9,8 +9,9 @@ import django
 import sys
 
 # Setup Django
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'logbert.settings')
+script_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, script_dir)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'webplatform.settings')
 django.setup()
 
 from dashboard.models import LogEntry, ThreatIntelligenceCache
