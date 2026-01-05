@@ -118,9 +118,14 @@
                             Security anomalies from the last 24 hours
                         </p>
                     </div>
-                    <button class="btn btn-outline-primary btn-sm" onclick="loadThreatMap()">
-                        <i class="fas fa-sync-alt me-1"></i>Refresh
-                    </button>
+                    <div>
+                        <button class="btn btn-success btn-sm me-2" onclick="populateThreatCache()" id="populateCacheBtn">
+                            <i class="fas fa-database me-1"></i>Auto-Populate Cache
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="loadThreatMap()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh Map
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -470,6 +475,48 @@ function displayThreatMap(data) {
     });
     summaryHTML += '</div>';
     document.getElementById('countrySummary').innerHTML = summaryHTML;
+}
+
+// Auto-populate threat intelligence cache
+function populateThreatCache() {
+    const btn = document.getElementById('populateCacheBtn');
+    const originalHTML = btn.innerHTML;
+    
+    // Disable button and show loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Populating...';
+    
+    fetch('/dashboard/api/populate-threat-cache/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        
+        if (data.success) {
+            alert(`✅ Cache Population Complete!\n\n` +
+                  `📊 Found: ${data.total_ips} unique IPs\n` +
+                  `✅ Successfully cached: ${data.success_count}\n` +
+                  `❌ Errors/Skipped: ${data.error_count}\n` +
+                  `📊 Total in cache: ${data.cache_total}\n\n` +
+                  `Click "Refresh Map" to see the markers!`);
+            
+            // Auto-refresh the map
+            setTimeout(() => loadThreatMap(), 1000);
+        } else {
+            alert(`❌ Error: ${data.message || 'Failed to populate cache'}`);
+        }
+    })
+    .catch(e => {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        alert(`❌ Error: ${e.message}`);
+    });
 }
 
 // Load threat map on page load

@@ -115,32 +115,32 @@ def dashboard_stats(request):
     })
 
 
-# @require_POST
-# @login_required
-# def reset_database(request):
-#     """Reset all logs and anomalies for demo purposes"""
-#     try:
-#         # Delete all anomalies first (due to foreign key constraint)
-#         anomaly_count = Anomaly.objects.count()
-#         log_count = LogEntry.objects.count()
-#         
-#         Anomaly.objects.all().delete()
-#         LogEntry.objects.all().delete()
-#         
-#         # Clear cache to force refresh
-#         cache.clear()
-#         
-#         return JsonResponse({
-#             'status': 'success',
-#             'message': f'Database reset successfully. Deleted {log_count} logs and {anomaly_count} anomalies.',
-#             'deleted_logs': log_count,
-#             'deleted_anomalies': anomaly_count
-#         })
-#     except Exception as e:
-#         return JsonResponse({
-#             'status': 'error',
-#             'message': f'Failed to reset database: {str(e)}'
-#         }, status=500)
+@require_POST
+@login_required
+def reset_database(request):
+    """Reset all logs and anomalies for demo purposes"""
+    try:
+        # Delete all anomalies first (due to foreign key constraint)
+        anomaly_count = Anomaly.objects.count()
+        log_count = LogEntry.objects.count()
+        
+        Anomaly.objects.all().delete()
+        LogEntry.objects.all().delete()
+        
+        # Clear cache to force refresh
+        cache.clear()
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Database reset successfully. Deleted {log_count} logs and {anomaly_count} anomalies.',
+            'deleted_logs': log_count,
+            'deleted_anomalies': anomaly_count
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Failed to reset database: {str(e)}'
+        }, status=500)
 
 
 @login_required
@@ -721,4 +721,93 @@ def threat_map_data(request):
         return JsonResponse({
             'error': 'Server error',
             'message': f'Failed to fetch map data: {str(e)}'
+        }, status=500)
+
+
+@login_required
+def populate_threat_cache_api(request):
+    """
+    API endpoint to populate threat intelligence cache from Security Anomaly IPs.
+    This runs the same logic as populate_threat_cache.py script.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        from datetime import timedelta
+        from django.utils import timezone
+        from .models import LogEntry, ThreatIntelligenceCache
+        from .threat_intel_utils import unified_threat_lookup
+        
+        # Get Security Anomaly IPs from last 24 hours
+        last_24h = timezone.now() - timedelta(hours=24)
+        
+        security_ips = LogEntry.objects.filter(
+            classification_name='Security Anomaly',
+            timestamp__gte=last_24h
+        ).exclude(
+            host_ip__isnull=True
+        ).exclude(
+            host_ip=''
+        ).exclude(
+            host_ip='unknown'
+        ).values_list('host_ip', flat=True).distinct()
+        
+        total_ips = len(security_ips)
+        
+        if total_ips == 0:
+            return JsonResponse({
+                'success': False,
+                'message': 'No Security Anomaly IPs found. Send logs first!'
+            })
+        
+        # Check which ones are already cached
+        cached_ips = set(ThreatIntelligenceCache.objects.filter(
+            ip_address__in=security_ips
+        ).values_list('ip_address', flat=True))
+        
+        uncached_ips = [ip for ip in security_ips if ip not in cached_ips]
+        
+        if len(uncached_ips) == 0:
+            return JsonResponse({
+                'success': True,
+                'message': 'All IPs already cached!',
+                'total_ips': total_ips,
+                'success_count': 0,
+                'error_count': 0,
+                'cache_total': ThreatIntelligenceCache.objects.count()
+            })
+        
+        # Lookup uncached IPs
+        success_count = 0
+        error_count = 0
+        
+        for ip in uncached_ips[:20]:  # Limit to 20 to avoid timeout
+            try:
+                result = unified_threat_lookup(ip)
+                
+                if not result.get('error'):
+                    if ThreatIntelligenceCache.objects.filter(ip_address=ip).exists():
+                        success_count += 1
+                    else:
+                        error_count += 1
+                else:
+                    error_count += 1
+                    
+            except Exception:
+                error_count += 1
+        
+        return JsonResponse({
+            'success': True,
+            'total_ips': total_ips,
+            'success_count': success_count,
+            'error_count': error_count,
+            'cache_total': ThreatIntelligenceCache.objects.count(),
+            'message': f'Populated {success_count} IPs. {len(uncached_ips) - 20 if len(uncached_ips) > 20 else 0} remaining.'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error: {str(e)}'
         }, status=500)

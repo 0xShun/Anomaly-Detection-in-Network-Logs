@@ -9,7 +9,7 @@ urlpatterns = [
     path('logs/', views.log_details, name='log_details'),
     path('partials/anomaly-feed/', views.anomaly_feed_partial, name='anomaly_feed_partial'),
     path('partials/stats/', views.dashboard_stats, name='dashboard_stats'),
-    # path('reset-database/', views.reset_database, name='reset_database'),  # Disabled for production
+    path('reset-database/', views.reset_database, name='reset_database'),
     path('api/dashboard-data/', views.api_dashboard_data, name='api_dashboard_data'),
     path('api/anomaly-feed/', views.api_anomaly_feed, name='api_anomaly_feed'),
     path('api/log/<int:log_id>/', views.api_log_detail, name='api_log_detail'),
@@ -36,4 +36,5 @@ urlpatterns = [
     path('threat-intelligence/', views.threat_intelligence, name='threat_intelligence'),
     path('api/virustotal-lookup/', views.virustotal_lookup, name='virustotal_lookup'),
     path('api/threat-map-data/', views.threat_map_data, name='threat_map_data'),
+    path('api/populate-threat-cache/', views.populate_threat_cache_api, name='populate_threat_cache_api'),
 ] 
