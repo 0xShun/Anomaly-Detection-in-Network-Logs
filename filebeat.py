@@ -144,30 +144,75 @@ ANOMALY_SCORE_RANGES = {
 # IP pools
 NORMAL_IPS = [f"192.168.1.{i}" for i in range(10, 100)]
 MALICIOUS_IPS = [
-    "162.19.231.60",
-    "222.189.195.176",
-    "42.0.135.109",
-    "172.67.192.229",
-    "63.223.81.61",
-    "223.167.143.37",
-    "23.95.35.112",
-    "23.222.22.159",
-    "42.0.136.11",
-    "133.237.105.33",
-    "172.67.138.230",
-    "116.208.206.150",
-    "117.60.41.169",
-    "43.167.252.157",
-    "106.111.126.156",
-    "85.121.51.70",
-    "43.240.221.119",
-    "42.0.135.154",
-    "172.67.181.124",
-    "42.0.135.48",
-    "120.39.55.74",
-    "85.175.219.236",
-    "113.231.14.218",
-    "60.18.18.7"
+    # China
+    "222.189.195.176",  # CN - Known malicious
+    "42.0.135.109",     # CN - Scanning/attacks
+    "42.0.136.11",      # CN - Brute force
+    "223.167.143.37",   # CN - DDoS
+    "116.208.206.150",  # CN - Exploitation
+    "117.60.41.169",    # CN - Malicious activity
+    "106.111.126.156",  # CN - Port scanning
+    "120.39.55.74",     # CN - Attack source
+    "113.231.14.218",   # CN - Malicious
+    
+    # United States
+    "23.95.35.112",     # US - Malicious activity
+    "162.19.231.60",    # US - Known bad actor
+    "63.223.81.61",     # US - Attack source
+    "23.222.22.159",    # US - Scanning
+    
+    # Russia
+    "185.220.101.34",   # RU - Tor exit node
+    "91.219.237.244",   # RU - DDoS attacks
+    "89.248.165.188",   # RU - Malicious host
+    "45.155.205.233",   # RU - Brute force
+    "185.156.73.54",    # RU - Attack source
+    
+    # Germany
+    "195.201.151.226",  # DE - Scanning/attacks
+    "178.254.13.177",   # DE - Malicious activity
+    "88.198.48.20",     # DE - Known bad IP
+    
+    # India
+    "103.253.145.22",   # IN - Brute force
+    "103.105.50.50",    # IN - Malicious
+    "152.58.182.221",   # IN - Attack source
+    
+    # Brazil
+    "177.11.51.73",     # BR - Malicious activity
+    "189.6.6.197",      # BR - DDoS source
+    
+    # France
+    "51.255.172.55",    # FR - Attack source
+    "178.33.111.174",   # FR - Malicious
+    
+    # Netherlands
+    "198.50.191.95",    # NL - Malicious host
+    "185.220.101.42",   # NL - Tor exit/attacks
+    
+    # Vietnam
+    "113.161.88.153",   # VN - Attack source
+    
+    # Singapore
+    "188.166.234.197",  # SG - Malicious activity
+    
+    # Turkey
+    "185.129.61.46",    # TR - Attack source
+    
+    # Poland
+    "91.134.232.137",   # PL - Malicious
+    
+    # Ukraine
+    "176.103.48.107",   # UA - DDoS/attacks
+    
+    # South Korea
+    "211.253.10.86",    # KR - Scanning
+    
+    # Thailand
+    "171.6.120.45",     # TH - Malicious activity
+    
+    # Bangladesh
+    "103.106.239.71",   # BD - Attack source
 ]
 
 def generate_log_message(classification_class):
