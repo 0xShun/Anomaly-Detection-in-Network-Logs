@@ -15,6 +15,7 @@ from .utils import (
     get_cached_log_distributions, get_cached_system_metrics,
     get_cached_classification_stats
 )
+from rest_framework.decorators import api_view
 import json
 import threading
 import subprocess
