@@ -6,16 +6,17 @@
 
 {% block content %}
 
-<div class="row mb-5">
+<!-- IP Lookup Section -->
+<div class="row mb-4">
     <div class="col-lg-8 mx-auto">
         <div class="content-card">
             <div class="card-header border-0 pb-3">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-shield-alt card-icon"></i>
-                    VirusTotal IP Lookup
+                    IP Threat Intelligence Lookup
                 </h5>
                 <p class="text-muted mt-2 mb-0">
-                    Check IP addresses against VirusTotal threat database
+                    Check IP addresses against VirusTotal and AbuseIPDB threat databases
                 </p>
             </div>
             
@@ -35,14 +36,35 @@
 
                 <div id="loadingSpinner" class="text-center my-5" style="display: none;">
                     <div class="spinner-border text-primary"></div>
-                    <p class="mt-3 text-muted">Querying...</p>
+                    <p class="mt-3 text-muted">Querying threat databases...</p>
                 </div>
 
+                <!-- Combined Threat Score -->
+                <div id="threatScoreContainer" class="alert mb-4" style="display: none;">
+                    <h6><i class="fas fa-chart-line me-2"></i>Combined Threat Assessment</h6>
+                    <div id="threatScoreDisplay"></div>
+                </div>
+
+                <!-- VirusTotal Results -->
                 <div id="resultsContainer" style="display: none;">
-                    <div class="alert alert-info">
-                        <h6><i class="fas fa-shield-virus me-2"></i>VirusTotal Results</h6>
+                    <div class="alert alert-info mb-3">
+                        <h6><i class="fas fa-shield-virus me-2"></i>VirusTotal Analysis</h6>
                         <div id="virustotalResults"></div>
                     </div>
+                </div>
+
+                <!-- AbuseIPDB Results -->
+                <div id="abuseipdbContainer" style="display: none;">
+                    <div class="alert alert-warning mb-3">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>AbuseIPDB Reports</h6>
+                        <div id="abuseipdbResults"></div>
+                    </div>
+                </div>
+
+                <!-- GeoIP Location -->
+                <div id="geoipContainer" class="alert alert-secondary mb-3" style="display: none;">
+                    <h6><i class="fas fa-globe me-2"></i>Geographic Information</h6>
+                    <div id="geoipResults"></div>
                 </div>
 
                 <div id="errorContainer" class="alert alert-danger" style="display: none;">
@@ -54,7 +76,113 @@
     </div>
 </div>
 
+<!-- Threat Map Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="content-card">
+            <div class="card-header border-0 pb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-map-marked-alt card-icon"></i>
+                            Global Threat Map
+                        </h5>
+                        <p class="text-muted mt-2 mb-0">
+                            Security anomalies from the last 24 hours
+                        </p>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm" onclick="loadThreatMap()">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <div id="mapLoadingSpinner" class="text-center my-5" style="display: none;">
+                    <div class="spinner-border text-primary"></div>
+                    <p class="mt-3 text-muted">Loading threat map...</p>
+                </div>
+
+                <div id="threatMapContainer">
+                    <!-- Map will be rendered here -->
+                    <div id="worldMap" class="position-relative" style="width: 100%; height: 500px; background: linear-gradient(to bottom, #e3f2fd 0%, #bbdefb 100%); border-radius: 8px; overflow: hidden;">
+                        <svg width="100%" height="100%" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet">
+                            <!-- Simplified world map outlines -->
+                            <g id="mapOutlines" fill="#90caf9" stroke="#1976d2" stroke-width="1">
+                                <!-- Continents as simplified paths -->
+                                <path id="northAmerica" d="M 150,100 L 200,80 L 280,90 L 300,120 L 280,200 L 200,220 L 150,200 Z"/>
+                                <path id="southAmerica" d="M 250,280 L 280,260 L 290,320 L 260,380 L 240,350 Z"/>
+                                <path id="europe" d="M 480,120 L 520,100 L 560,110 L 550,160 L 490,150 Z"/>
+                                <path id="africa" d="M 480,200 L 540,190 L 560,250 L 550,320 L 500,340 L 470,280 Z"/>
+                                <path id="asia" d="M 580,80 L 750,90 L 800,130 L 780,200 L 700,180 L 650,150 L 600,120 Z"/>
+                                <path id="australia" d="M 780,320 L 850,310 L 870,350 L 840,370 L 790,360 Z"/>
+                            </g>
+                            <!-- Threat markers will be added dynamically -->
+                            <g id="threatMarkers"></g>
+                        </svg>
+                    </div>
+
+                    <!-- Map Legend -->
+                    <div class="mt-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Legend:</h6>
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge bg-danger me-2" style="width: 20px; height: 20px; border-radius: 50%;"></span>
+                                    <span>High Threat (Score > 70)</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge bg-warning me-2" style="width: 20px; height: 20px; border-radius: 50%;"></span>
+                                    <span>Suspicious (Score 31-70)</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-success me-2" style="width: 20px; height: 20px; border-radius: 50%;"></span>
+                                    <span>Low Threat (Score ≤ 30)</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Statistics:</h6>
+                                <div id="mapStats">
+                                    <p class="mb-1">Total IPs: <span id="totalIPs" class="fw-bold">0</span></p>
+                                    <p class="mb-1">Countries: <span id="totalCountries" class="fw-bold">0</span></p>
+                                    <p class="mb-0">Last Updated: <span id="lastUpdated" class="fw-bold">Never</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Country Summary -->
+                    <div id="countrySummary" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+// Country code to coordinates mapping (approximate center points)
+const countryCoordinates = {
+    'US': {x: 200, y: 150}, 'CN': {x: 750, y: 140}, 'RU': {x: 680, y: 110},
+    'BR': {x: 270, y: 310}, 'IN': {x: 680, y: 200}, 'DE': {x: 500, y: 130},
+    'GB': {x: 470, y: 120}, 'FR': {x: 490, y: 135}, 'JP': {x: 820, y: 160},
+    'AU': {x: 820, y: 340}, 'CA': {x: 180, y: 100}, 'MX': {x: 200, y: 200},
+    'KR': {x: 800, y: 165}, 'IT': {x: 510, y: 145}, 'ES': {x: 460, y: 150},
+    'NL': {x: 495, y: 125}, 'SE': {x: 515, y: 100}, 'PL': {x: 520, y: 125},
+    'TR': {x: 560, y: 155}, 'ID': {x: 750, y: 260}, 'TH': {x: 730, y: 210},
+    'VN': {x: 750, y: 210}, 'PH': {x: 790, y: 220}, 'MY': {x: 740, y: 240},
+    'SG': {x: 740, y: 250}, 'ZA': {x: 530, y: 340}, 'EG': {x: 550, y: 190},
+    'NG': {x: 490, y: 240}, 'KE': {x: 570, y: 270}, 'AR': {x: 260, y: 350},
+    'CL': {x: 245, y: 360}, 'CO': {x: 250, y: 250}, 'PE': {x: 250, y: 290},
+    'VE': {x: 265, y: 240}, 'UA': {x: 550, y: 130}, 'RO': {x: 540, y: 140},
+    'CZ': {x: 515, y: 130}, 'BE': {x: 490, y: 130}, 'PT': {x: 455, y: 155},
+    'GR': {x: 530, y: 155}, 'HU': {x: 525, y: 138}, 'AT': {x: 515, y: 137},
+    'CH': {x: 498, y: 137}, 'NO': {x: 505, y: 95}, 'DK': {x: 505, y: 115},
+    'FI': {x: 540, y: 95}, 'IE': {x: 460, y: 120}, 'NZ': {x: 900, y: 380},
+    'IL': {x: 565, y: 175}, 'SA': {x: 590, y: 200}, 'AE': {x: 610, y: 200},
+    'PK': {x: 660, y: 185}, 'BD': {x: 710, y: 205}, 'IR': {x: 610, y: 170},
+    'IQ': {x: 580, y: 175}, 'HK': {x: 760, y: 205}, 'TW': {x: 790, y: 205},
+};
+
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -73,8 +201,12 @@ function getCookie(name) {
 function lookupIP(event) {
     event.preventDefault();
     const ip = document.getElementById('ipAddress').value.trim();
+    
     document.getElementById('loadingSpinner').style.display = 'block';
     document.getElementById('resultsContainer').style.display = 'none';
+    document.getElementById('abuseipdbContainer').style.display = 'none';
+    document.getElementById('geoipContainer').style.display = 'none';
+    document.getElementById('threatScoreContainer').style.display = 'none';
     document.getElementById('errorContainer').style.display = 'none';
     
     fetch('/dashboard/api/virustotal-lookup/', {
@@ -90,48 +222,212 @@ function lookupIP(event) {
             document.getElementById('loadingSpinner').style.display = 'none';
             if (data.error) {
                 document.getElementById('errorContainer').style.display = 'block';
-                document.getElementById('errorMessage').textContent = data.error;
+                document.getElementById('errorMessage').textContent = data.error + (data.message ? ': ' + data.message : '');
             } else {
-                document.getElementById('resultsContainer').style.display = 'block';
                 displayResults(data);
             }
         })
         .catch(e => {
             document.getElementById('loadingSpinner').style.display = 'none';
             document.getElementById('errorContainer').style.display = 'block';
-            document.getElementById('errorMessage').textContent = 'Error fetching data';
+            document.getElementById('errorMessage').textContent = 'Error fetching data: ' + e.message;
         });
 }
 
 function displayResults(data) {
+    // Display combined threat score
+    if (data.threat_score) {
+        const ts = data.threat_score;
+        document.getElementById('threatScoreContainer').style.display = 'block';
+        document.getElementById('threatScoreContainer').className = `alert alert-${ts.color}`;
+        
+        document.getElementById('threatScoreDisplay').innerHTML = `
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h3 class="mb-0">${ts.icon} ${ts.score}/100</h3>
+                    <p class="mb-0">Threat Level: <span class="${ts.badge_class}">${ts.level.toUpperCase()}</span></p>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted">Combined VirusTotal + AbuseIPDB Score</small>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Display VirusTotal results
     if (data.virustotal) {
         const vt = data.virustotal;
+        document.getElementById('resultsContainer').style.display = 'block';
         document.getElementById('virustotalResults').innerHTML = `
-            <div class="row g-3">
-                <div class="col-md-4 text-center">
+            <div class="row g-3 mb-3">
+                <div class="col-md-3 text-center">
                     <div class="p-3 bg-light rounded">
                         <div class="fs-3 fw-bold text-danger">${vt.malicious || 0}</div>
                         <div class="text-muted small">Malicious</div>
                     </div>
                 </div>
-                <div class="col-md-4 text-center">
+                <div class="col-md-3 text-center">
                     <div class="p-3 bg-light rounded">
                         <div class="fs-3 fw-bold text-warning">${vt.suspicious || 0}</div>
                         <div class="text-muted small">Suspicious</div>
                     </div>
                 </div>
-                <div class="col-md-4 text-center">
+                <div class="col-md-3 text-center">
                     <div class="p-3 bg-light rounded">
                         <div class="fs-3 fw-bold text-success">${vt.harmless || 0}</div>
                         <div class="text-muted small">Harmless</div>
                     </div>
                 </div>
+                <div class="col-md-3 text-center">
+                    <div class="p-3 bg-light rounded">
+                        <div class="fs-3 fw-bold text-secondary">${vt.undetected || 0}</div>
+                        <div class="text-muted small">Undetected</div>
+                    </div>
+                </div>
             </div>
-            ${vt.country ? `<div class="mt-3"><strong>Country:</strong> ${vt.country}</div>` : ''}
+            ${vt.reputation !== undefined ? `<div class="mt-2"><strong>Reputation:</strong> ${vt.reputation}</div>` : ''}
             ${vt.as_owner ? `<div class="mt-2"><strong>AS Owner:</strong> ${vt.as_owner}</div>` : ''}
         `;
     }
+    
+    // Display AbuseIPDB results
+    if (data.abuseipdb && data.abuseipdb.success) {
+        const ab = data.abuseipdb;
+        document.getElementById('abuseipdbContainer').style.display = 'block';
+        document.getElementById('abuseipdbResults').innerHTML = `
+            <div class="row g-3 mb-3">
+                <div class="col-md-4 text-center">
+                    <div class="p-3 bg-light rounded">
+                        <div class="fs-3 fw-bold text-danger">${ab.confidence_score || 0}%</div>
+                        <div class="text-muted small">Confidence Score</div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="p-3 bg-light rounded">
+                        <div class="fs-3 fw-bold">${ab.total_reports || 0}</div>
+                        <div class="text-muted small">Total Reports</div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="p-3 bg-light rounded">
+                        <div class="fs-3 fw-bold">${ab.num_distinct_users || 0}</div>
+                        <div class="text-muted small">Reporters</div>
+                    </div>
+                </div>
+            </div>
+            ${ab.usage_type ? `<div class="mt-2"><strong>Usage Type:</strong> ${ab.usage_type}</div>` : ''}
+            ${ab.isp ? `<div class="mt-2"><strong>ISP:</strong> ${ab.isp}</div>` : ''}
+            ${ab.is_whitelisted ? `<div class="mt-2"><span class="badge bg-success">Whitelisted</span></div>` : ''}
+        `;
+    }
+    
+    // Display GeoIP information
+    const country = data.virustotal?.country || data.abuseipdb?.country || data.shodan?.country;
+    if (country) {
+        document.getElementById('geoipContainer').style.display = 'block';
+        const flag = data.country_flag || '';
+        document.getElementById('geoipResults').innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-2"><strong>Country:</strong> ${flag} ${country}</p>
+                    ${data.shodan?.city ? `<p class="mb-2"><strong>City:</strong> ${data.shodan.city}</p>` : ''}
+                </div>
+                <div class="col-md-6">
+                    ${data.virustotal?.as_owner || data.abuseipdb?.isp ? 
+                        `<p class="mb-2"><strong>Organization:</strong> ${data.virustotal?.as_owner || data.abuseipdb?.isp}</p>` : ''}
+                </div>
+            </div>
+        `;
+    }
 }
+
+// Load threat map data
+function loadThreatMap() {
+    document.getElementById('mapLoadingSpinner').style.display = 'block';
+    document.getElementById('threatMapContainer').style.opacity = '0.5';
+    
+    fetch('/dashboard/api/threat-map-data/')
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('mapLoadingSpinner').style.display = 'none';
+            document.getElementById('threatMapContainer').style.opacity = '1';
+            
+            if (data.success) {
+                displayThreatMap(data);
+            }
+        })
+        .catch(e => {
+            document.getElementById('mapLoadingSpinner').style.display = 'none';
+            document.getElementById('threatMapContainer').style.opacity = '1';
+            console.error('Error loading threat map:', e);
+        });
+}
+
+function displayThreatMap(data) {
+    const markersGroup = document.getElementById('threatMarkers');
+    markersGroup.innerHTML = ''; // Clear existing markers
+    
+    // Add markers for each IP location
+    data.ip_locations.forEach(location => {
+        const coords = countryCoordinates[location.country_code];
+        if (!coords) return;
+        
+        // Determine marker color based on threat level
+        let color = '#28a745'; // green (safe)
+        const totalScore = (location.malicious_count * 10) + location.abuse_score;
+        if (totalScore > 70) {
+            color = '#dc3545'; // red (malicious)
+        } else if (totalScore > 30) {
+            color = '#ffc107'; // yellow (suspicious)
+        }
+        
+        // Add some random offset to avoid overlapping markers from same country
+        const offsetX = (Math.random() - 0.5) * 30;
+        const offsetY = (Math.random() - 0.5) * 30;
+        
+        // Create marker
+        const marker = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        marker.setAttribute('cx', coords.x + offsetX);
+        marker.setAttribute('cy', coords.y + offsetY);
+        marker.setAttribute('r', '6');
+        marker.setAttribute('fill', color);
+        marker.setAttribute('stroke', '#fff');
+        marker.setAttribute('stroke-width', '2');
+        marker.setAttribute('opacity', '0.8');
+        
+        // Add tooltip
+        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        title.textContent = `${location.country_flag} ${location.ip} (${location.country_code})`;
+        marker.appendChild(title);
+        
+        markersGroup.appendChild(marker);
+    });
+    
+    // Update statistics
+    document.getElementById('totalIPs').textContent = data.total_ips;
+    document.getElementById('totalCountries').textContent = Object.keys(data.country_summary).length;
+    document.getElementById('lastUpdated').textContent = new Date(data.last_updated).toLocaleString();
+    
+    // Display country summary
+    let summaryHTML = '<h6 class="mt-3">Top Countries:</h6><div class="row">';
+    const sortedCountries = Object.entries(data.country_summary).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    sortedCountries.forEach(([country, count]) => {
+        const location = data.ip_locations.find(l => l.country_code === country);
+        const flag = location ? location.country_flag : '';
+        summaryHTML += `
+            <div class="col-md-4 col-lg-3 mb-2">
+                <span class="badge bg-secondary">${flag} ${country}: ${count}</span>
+            </div>
+        `;
+    });
+    summaryHTML += '</div>';
+    document.getElementById('countrySummary').innerHTML = summaryHTML;
+}
+
+// Load threat map on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadThreatMap();
+});
 </script>
 
 {% endblock %}

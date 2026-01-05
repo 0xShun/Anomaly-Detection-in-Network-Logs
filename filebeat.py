@@ -2,6 +2,10 @@
 """
 Demo Log Generator - Sends 400 realistic classified logs to API
 Simulates logs that have been classified by LogBERT model
+
+Usage:
+    python3 filebeat.py              # Send to local server (localhost:8080)
+    python3 filebeat.py --remote     # Send to PythonAnywhere (logbert.pythonanywhere.com)
 """
 
 import requests
@@ -9,10 +13,23 @@ import time
 from datetime import datetime, timedelta
 import random
 import sys
+import argparse
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Send demo logs to API')
+parser.add_argument('--remote', action='store_true', 
+                    help='Send to PythonAnywhere instead of localhost')
+args = parser.parse_args()
 
 # API Configuration
-API_URL = "http://localhost:8080/api/v1/logs/"
-API_KEY = "C6lMbC13jaElZ_tFjuTHfg_ywDzyAvJHl7W2efpNqCA"
+if args.remote:
+    API_URL = "https://logbert.pythonanywhere.com/api/v1/logs/"
+    API_KEY = "a44A48kPWOtCSMGF4nAWUzCpbXbdCe7iLE3lpXlbFV4"
+    print("🌐 Remote mode: Sending to PythonAnywhere")
+else:
+    API_URL = "http://localhost:8080/api/v1/logs/"
+    API_KEY = "C6lMbC13jaElZ_tFjuTHfg_ywDzyAvJHl7W2efpNqCA"
+    print("💻 Local mode: Sending to localhost:8080")
 
 # Log templates for each classification
 LOG_TEMPLATES = {

@@ -603,7 +603,7 @@ def virustotal_lookup(request):
     API endpoint for unified threat intelligence lookup.
     Queries VirusTotal, AbuseIPDB, and Shodan APIs.
     """
-    from .threat_intel_utils import unified_threat_lookup
+    from .threat_intel_utils import unified_threat_lookup, calculate_threat_score, get_country_flag
     import re
     
     if request.method != 'POST':
@@ -632,6 +632,18 @@ def virustotal_lookup(request):
         # Perform unified threat intelligence lookup
         results = unified_threat_lookup(ip_address)
         
+        # Calculate combined threat score
+        threat_score = calculate_threat_score(
+            results.get('virustotal', {}),
+            results.get('abuseipdb', {})
+        )
+        results['threat_score'] = threat_score
+        
+        # Add country flag if available
+        country_code = results.get('virustotal', {}).get('country')
+        if country_code and len(country_code) == 2:
+            results['country_flag'] = get_country_flag(country_code)
+        
         return JsonResponse(results)
         
     except json.JSONDecodeError:
@@ -645,3 +657,67 @@ def virustotal_lookup(request):
             'message': f'An error occurred: {str(e)}'
         }, status=500)
 
+
+@api_view(['GET'])
+def threat_map_data(request):
+    """
+    API endpoint to get geographic data for Security Anomalies from last 24 hours.
+    Returns IP addresses with their country codes for map visualization.
+    """
+    from datetime import timedelta
+    from django.utils import timezone
+    from .models import LogEntry, Anomaly
+    from .threat_intel_utils import get_country_flag
+    from collections import defaultdict
+    
+    try:
+        # Get security anomalies from last 24 hours
+        last_24h = timezone.now() - timedelta(hours=24)
+        
+        security_anomalies = LogEntry.objects.filter(
+            classification_name='Security Anomaly',
+            timestamp__gte=last_24h
+        ).values('host_ip').distinct()[:100]  # Limit to 100 unique IPs
+        
+        # Get country data from ThreatIntelligenceCache
+        from .models import ThreatIntelligenceCache
+        
+        map_data = []
+        country_counts = defaultdict(int)
+        
+        for anomaly in security_anomalies:
+            ip = anomaly['host_ip']
+            if not ip or ip == 'unknown':
+                continue
+            
+            try:
+                cache = ThreatIntelligenceCache.objects.get(ip_address=ip)
+                country_code = cache.vt_country or cache.abuseipdb_country or cache.shodan_country
+                
+                if country_code and len(country_code) == 2:
+                    map_data.append({
+                        'ip': ip,
+                        'country_code': country_code.upper(),
+                        'country_flag': get_country_flag(country_code),
+                        'country_name': country_code.upper(),
+                        'malicious_count': cache.vt_malicious or 0,
+                        'abuse_score': cache.abuseipdb_confidence_score or 0
+                    })
+                    country_counts[country_code.upper()] += 1
+            except ThreatIntelligenceCache.DoesNotExist:
+                # IP not in cache, skip it
+                continue
+        
+        return JsonResponse({
+            'success': True,
+            'total_ips': len(map_data),
+            'ip_locations': map_data,
+            'country_summary': dict(country_counts),
+            'last_updated': timezone.now().isoformat()
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'error': 'Server error',
+            'message': f'Failed to fetch map data: {str(e)}'
+        }, status=500)

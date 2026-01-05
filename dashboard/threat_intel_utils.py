@@ -479,3 +479,94 @@ def unified_threat_lookup(ip_address):
     cache_obj.save()
     
     return results
+
+
+def calculate_threat_score(vt_data, abuseipdb_data):
+    """
+    Calculate combined threat score (0-100) from VirusTotal and AbuseIPDB data.
+    
+    Score breakdown:
+    - VirusTotal: 0-60 points (based on malicious/suspicious detections)
+    - AbuseIPDB: 0-40 points (based on confidence score)
+    
+    Returns:
+        dict: {
+            'score': int (0-100),
+            'level': str ('safe', 'suspicious', 'malicious'),
+            'color': str ('success', 'warning', 'danger'),
+            'badge_class': str (Bootstrap badge class),
+            'icon': str (emoji icon)
+        }
+    """
+    score = 0
+    
+    # VirusTotal contribution (0-60 points)
+    if vt_data.get('success'):
+        malicious = vt_data.get('malicious', 0)
+        suspicious = vt_data.get('suspicious', 0)
+        harmless = vt_data.get('harmless', 0)
+        undetected = vt_data.get('undetected', 0)
+        
+        total_detections = malicious + suspicious + harmless + undetected
+        
+        if total_detections > 0:
+            # Calculate percentage of malicious + suspicious detections
+            threat_percentage = ((malicious + (suspicious * 0.5)) / total_detections) * 100
+            vt_score = min(60, (threat_percentage / 100) * 60)
+            score += vt_score
+    
+    # AbuseIPDB contribution (0-40 points)
+    if abuseipdb_data.get('success'):
+        confidence = abuseipdb_data.get('confidence_score', 0)
+        # Convert confidence (0-100) to score contribution (0-40)
+        abuseipdb_score = (confidence / 100) * 40
+        score += abuseipdb_score
+    
+    # Round to integer
+    score = int(round(score))
+    
+    # Determine threat level
+    if score <= 30:
+        level = 'safe'
+        color = 'success'
+        badge_class = 'badge bg-success'
+        icon = '🟢'
+    elif score <= 70:
+        level = 'suspicious'
+        color = 'warning'
+        badge_class = 'badge bg-warning text-dark'
+        icon = '🟡'
+    else:
+        level = 'malicious'
+        color = 'danger'
+        badge_class = 'badge bg-danger'
+        icon = '🔴'
+    
+    return {
+        'score': score,
+        'level': level,
+        'color': color,
+        'badge_class': badge_class,
+        'icon': icon
+    }
+
+
+def get_country_flag(country_code):
+    """
+    Convert country code to flag emoji.
+    
+    Args:
+        country_code: 2-letter ISO country code (e.g., 'US', 'CN', 'RU')
+    
+    Returns:
+        str: Flag emoji or empty string if invalid
+    """
+    if not country_code or len(country_code) != 2:
+        return ''
+    
+    # Convert country code to regional indicator symbols
+    # A = U+1F1E6, B = U+1F1E7, etc.
+    country_code = country_code.upper()
+    flag = ''.join(chr(0x1F1E6 + ord(c) - ord('A')) for c in country_code)
+    
+    return flag

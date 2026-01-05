@@ -74,10 +74,11 @@ class KafkaToAPIConsumer:
     """Consumes logs from Kafka and sends to API"""
     
     def __init__(self, api_url: str, kafka_servers: str = 'localhost:9092', 
-                 topic: str = 'log_topic'):
+                 topic: str = 'log_topic', api_key: str = None):
         self.api_url = api_url.rstrip('/') + '/api/logs/'
         self.kafka_servers = kafka_servers
         self.topic = topic
+        self.api_key = api_key or 'a44A48kPWOtCSMGF4nAWUzCpbXbdCe7iLE3lpXlbFV4'
         self.model_manager = None
         self.hostname_to_ip = {}
         
@@ -85,6 +86,8 @@ class KafkaToAPIConsumer:
         logger.info(f"Kafka servers: {self.kafka_servers}")
         logger.info(f"Topic: {self.topic}")
         logger.info(f"API endpoint: {self.api_url}")
+        logger.info(f"API key: {self.api_key[:20]}...")
+        
         
     def load_model(self):
         """Load Hybrid-BERT model"""
@@ -221,11 +224,18 @@ class KafkaToAPIConsumer:
         if isinstance(log_data.get('timestamp'), datetime):
             log_data['timestamp'] = log_data['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
         
+        # Prepare headers with API key authentication
+        headers = {
+            'Content-Type': 'application/json',
+            'X-API-Key': self.api_key
+        }
+        
         for attempt in range(max_retries + 1):
             try:
                 response = requests.post(
                     self.api_url,
                     json=log_data,
+                    headers=headers,
                     timeout=5
                 )
                 
@@ -353,6 +363,12 @@ def main():
         default=os.getenv('KAFKA_TOPIC', 'log_topic'),
         help='Kafka topic name (default: log_topic)'
     )
+    parser.add_argument(
+        '--api-key',
+        type=str,
+        default=os.getenv('API_KEY', 'a44A48kPWOtCSMGF4nAWUzCpbXbdCe7iLE3lpXlbFV4'),
+        help='API key for authentication (default: PythonAnywhere key)'
+    )
     
     args = parser.parse_args()
     
@@ -360,7 +376,7 @@ def main():
     if not args.api_url:
         logger.error("❌ API URL is required!")
         logger.error("   Use --api-url or set API_URL environment variable")
-        logger.error("   Example: python3 kafka_consumer_api_sender.py --api-url https://yoursite.pythonanywhere.com")
+        logger.error("   Example: python3 kafka_consumer_api_sender.py --api-url https://logbert.pythonanywhere.com")
         sys.exit(1)
     
     # Validate URL format
@@ -373,7 +389,8 @@ def main():
     consumer = KafkaToAPIConsumer(
         api_url=args.api_url,
         kafka_servers=args.kafka_servers,
-        topic=args.topic
+        topic=args.topic,
+        api_key=args.api_key
     )
     
     consumer.start_consuming()

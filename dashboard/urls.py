@@ -35,4 +35,5 @@ urlpatterns = [
     # Threat Intelligence
     path('threat-intelligence/', views.threat_intelligence, name='threat_intelligence'),
     path('api/virustotal-lookup/', views.virustotal_lookup, name='virustotal_lookup'),
+    path('api/threat-map-data/', views.threat_map_data, name='threat_map_data'),
 ] 
